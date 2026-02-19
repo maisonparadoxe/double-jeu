@@ -311,6 +311,33 @@ body::before{
   font-style:italic;
 }
 
+/* ── TOOLTIP SURRÉALISTE ── */
+.surreal-badge{
+  font-size:0.52rem;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--surreal-bright);border:1px solid var(--surreal);
+  padding:2px 6px;margin-top:6px;display:inline-block;
+  position:relative;cursor:help;
+}
+.surreal-badge::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:50%;transform:translateX(-50%);
+  background:#1a1020;
+  border:1px solid var(--surreal);
+  color:var(--surreal-bright);
+  font-size:0.62rem;line-height:1.6;
+  padding:8px 12px;
+  width:230px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 200ms;
+  z-index:200;
+  letter-spacing:0.03em;
+  font-style:italic;
+}
+.surreal-badge:hover::after{opacity:1;}
+
 .section-block{background:var(--bg-card);border:1px solid var(--border);padding:14px;}
 .block-label{
   font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;
@@ -663,232 +690,444 @@ body::before{
    DONNÉES
 ══════════════════════════════════════════════ */
 
+// ─── LÉGENDE DES TYPES ───────────────────────────────────────────────────────
+// rarete : "commun" | "peu_commun" | "rare"
+// surreal: true → bordure violette = événement/carte surréaliste (hors réalité)
+// temps  : coût en heures sur les 8h de la journée
+// cout   : ressources dépensées AVANT l'effet (positif = on perd cette quantité)
+// effet  : ce qui change après la carte (positif = gain, sauf stress où positif = mauvais)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CARTES = [
+
+  // ── REPOS ──────────────────────────────────────────────────────────────────
   {
     id:"dormir",
     nom:"Dormir 8h",
-    texte:"Une nuit sans cauchemars. Presque.",
-    type:"repos",
-    temps:4,
-    cout:{energie:0},
-    effet:{energie:+5,moral:+1,stress:-1},
+    texte:"Une nuit complète. Les cauchemars ont eu la décence d'attendre.",
+    type:"repos", temps:8,
+    cout:{},
+    effet:{energie:+6,moral:+2,stress:-2},
     rarete:"commun"
   },
   {
-    id:"cafe_triple",
-    nom:"Triple expresso",
-    texte:"Votre cœur bat trop vite. Vous verrez ça plus tard.",
-    type:"stimulant",
-    temps:1,
-    cout:{argent:3},
-    effet:{energie:+3,stress:+1},
+    id:"dormir_mal",
+    nom:"Dormir 4h",
+    texte:"Vous vous réveillez plus fatigué qu'avant. Le dossier vous a suivi dans le sommeil.",
+    type:"repos", temps:4,
+    cout:{},
+    effet:{energie:+2,stress:+1},
     rarete:"commun"
   },
   {
-    id:"fouiller_illegal",
-    nom:"Fouille illégale",
-    texte:"Vous trouvez ce qu'il faut. Votre badge brille moins fort.",
-    type:"enquete",
-    temps:3,
-    cout:{energie:2,reputation:-1},
-    effet:{avancement:+12,stress:+2},
+    id:"sieste",
+    nom:"Sieste au bureau",
+    texte:"La tête sur les dossiers. Quelqu'un a posé une veste sur vos épaules.",
+    type:"repos", temps:2,
+    cout:{},
+    effet:{energie:+2,moral:+1},
     rarete:"commun"
-  },
-  {
-    id:"appeler_famille",
-    nom:"Appeler la famille",
-    texte:"Leur voix vous rappelle pourquoi vous faites ça.",
-    type:"personnel",
-    temps:1,
-    cout:{energie:1},
-    effet:{moral:+3,relations:+2},
-    rarete:"commun"
-  },
-  {
-    id:"taper_rapport",
-    nom:"Taper un rapport",
-    texte:"La bureaucratie avance, l'enquête aussi. Un peu.",
-    type:"enquete",
-    temps:2,
-    cout:{energie:2},
-    effet:{avancement:+6,reputation:+1},
-    rarete:"commun"
-  },
-  {
-    id:"interroger_temoin",
-    nom:"Interroger un témoin",
-    texte:"Ils savent quelque chose. Ils ne vous le diront peut-être pas.",
-    type:"enquete",
-    temps:3,
-    cout:{energie:3},
-    effet:{avancement:+10,stress:+1},
-    rarete:"commun"
-  },
-  {
-    id:"seance_psy",
-    nom:"Séance chez le psy",
-    texte:"Elle dit que vous refoulez. Vous acquiescez.",
-    type:"soin",
-    temps:2,
-    cout:{argent:20,energie:1},
-    effet:{moral:+4,stress:-3},
-    rarete:"peu_commun"
-  },
-  {
-    id:"boire_seul",
-    nom:"Boire seul",
-    texte:"Le fond du verre ne répond pas. Mais il écoute.",
-    type:"repos",
-    temps:2,
-    cout:{argent:10},
-    effet:{stress:-2,moral:-1,energie:-1},
-    rarete:"commun"
-  },
-  {
-    id:"soudoyer",
-    nom:"Soudoyer un informateur",
-    texte:"L'argent change de mains dans le noir. L'info aussi.",
-    type:"enquete",
-    temps:2,
-    cout:{argent:30,reputation:-1},
-    effet:{avancement:+18},
-    rarete:"peu_commun"
   },
   {
     id:"faire_sport",
     nom:"Courir 10km",
     texte:"Vos pensées ne courent pas aussi vite. Pour l'instant.",
-    type:"repos",
-    temps:2,
+    type:"repos", temps:2,
     cout:{energie:2},
-    effet:{energie:+3,stress:-2,moral:+1},
+    effet:{energie:+2,stress:-3,moral:+1},
     rarete:"commun"
   },
   {
-    id:"analyser_indices",
-    nom:"Analyser les indices",
-    texte:"La vérité est là, quelque part. Sous la surface.",
-    type:"enquete",
-    temps:3,
-    cout:{energie:3},
-    effet:{avancement:+15,moral:-1},
-    rarete:"peu_commun"
-  },
-  {
-    id:"prendre_conges",
-    nom:"Prendre un congé forcé",
-    texte:"Le commissaire vous y oblige. Vous obéissez. Pour une fois.",
-    type:"repos",
-    temps:6,
-    cout:{avancement:-5},
-    effet:{energie:+6,moral:+3,stress:-4},
-    rarete:"rare"
-  },
-  {
-    id:"infiltrer",
-    nom:"Infiltrer le milieu",
-    texte:"Vous n'êtes plus tout à fait vous-même ce soir.",
-    type:"enquete",
-    temps:5,
-    cout:{energie:4,moral:-1,stress:+2},
-    effet:{avancement:+22,relations:-1},
-    rarete:"rare"
-  },
-  {
-    id:"parler_collegue",
-    nom:"Parler à un collègue",
-    texte:"Elle comprend. Ce métier ronge tout le monde pareil.",
-    type:"personnel",
-    temps:1,
-    cout:{energie:1},
-    effet:{moral:+2,stress:-1,relations:+1},
+    id:"boire_seul",
+    nom:"Boire seul",
+    texte:"Le fond du verre ne répond pas. Mais il écoute.",
+    type:"repos", temps:3,
+    cout:{argent:12},
+    effet:{stress:-3,moral:-2,energie:-1},
     rarete:"commun"
   },
   {
     id:"manger_chaud",
     nom:"Manger un vrai repas",
     texte:"Pas un sandwich. Une assiette. Dans un restaurant avec des gens.",
-    type:"repos",
-    temps:1,
-    cout:{argent:15,energie:1},
-    effet:{energie:+2,moral:+2,stress:-1},
+    type:"repos", temps:2,
+    cout:{argent:18},
+    effet:{energie:+3,moral:+2,stress:-1},
     rarete:"commun"
   },
   {
-    id:"nuit_blanche",
-    nom:"Nuit blanche sur les dossiers",
-    texte:"L'aube vous trouve encore à votre bureau. Vous avancez.",
-    type:"enquete",
-    temps:7,
-    cout:{energie:5,stress:+3},
-    effet:{avancement:+20,moral:-2},
+    id:"prendre_conges",
+    nom:"Congé forcé",
+    texte:"Le commissaire vous y oblige. Vous obéissez. Pour une fois.",
+    type:"repos", temps:8,
+    cout:{avancement:-8},
+    effet:{energie:+8,moral:+4,stress:-5,relations:+2},
+    rarete:"rare"
+  },
+  {
+    id:"meditation",
+    nom:"Méditation",
+    texte:"Vingt minutes les yeux fermés. La pièce est toujours là quand vous les rouvrez.",
+    type:"repos", temps:1,
+    cout:{},
+    effet:{stress:-2,moral:+1},
+    rarete:"commun"
+  },
+  {
+    id:"bain_froid",
+    nom:"Douche froide",
+    texte:"Ça réveille. Ça ne guérit pas.",
+    type:"repos", temps:1,
+    cout:{},
+    effet:{energie:+3,stress:-1},
+    rarete:"commun"
+  },
+
+  // ── ENQUÊTE ────────────────────────────────────────────────────────────────
+  {
+    id:"taper_rapport",
+    nom:"Taper un rapport",
+    texte:"La bureaucratie avance. L'enquête aussi. Un peu.",
+    type:"enquete", temps:3,
+    cout:{energie:2},
+    effet:{avancement:+7,reputation:+1},
+    rarete:"commun"
+  },
+  {
+    id:"interroger_temoin",
+    nom:"Interroger un témoin",
+    texte:"Ils savent quelque chose. Ils ne vous le diront peut-être pas.",
+    type:"enquete", temps:3,
+    cout:{energie:3},
+    effet:{avancement:+10,stress:+1},
+    rarete:"commun"
+  },
+  {
+    id:"fouiller_illegal",
+    nom:"Fouille illégale",
+    texte:"Vous trouvez ce qu'il faut. Votre badge brille moins fort.",
+    type:"enquete", temps:3,
+    cout:{energie:2,reputation:-2},
+    effet:{avancement:+14,stress:+2},
+    rarete:"commun"
+  },
+  {
+    id:"analyser_indices",
+    nom:"Analyser les indices",
+    texte:"La vérité est là, quelque part. Sous la surface.",
+    type:"enquete", temps:4,
+    cout:{energie:3},
+    effet:{avancement:+16,moral:-1},
     rarete:"peu_commun"
   },
+  {
+    id:"soudoyer",
+    nom:"Soudoyer un informateur",
+    texte:"L'argent change de mains dans le noir. L'info aussi.",
+    type:"enquete", temps:2,
+    cout:{argent:35,reputation:-1},
+    effet:{avancement:+18},
+    rarete:"peu_commun"
+  },
+  {
+    id:"infiltrer",
+    nom:"Infiltrer le milieu",
+    texte:"Vous n'êtes plus tout à fait vous-même ce soir.",
+    type:"enquete", temps:6,
+    cout:{energie:4,moral:-2,stress:+3},
+    effet:{avancement:+24,relations:-2},
+    rarete:"rare"
+  },
+  {
+    id:"nuit_blanche",
+    nom:"Nuit blanche",
+    texte:"L'aube vous trouve encore à votre bureau. Vous avancez. Tout le reste recule.",
+    type:"enquete", temps:8,
+    cout:{energie:5,stress:+4},
+    effet:{avancement:+22,moral:-3},
+    rarete:"peu_commun"
+  },
+  {
+    id:"surveiller",
+    nom:"Surveillance de nuit",
+    texte:"Quatre heures dans une voiture froide. Quelque chose finit par bouger.",
+    type:"enquete", temps:5,
+    cout:{energie:3,stress:+2},
+    effet:{avancement:+12,moral:-1},
+    rarete:"commun"
+  },
+  {
+    id:"perquisition",
+    nom:"Perquisition officielle",
+    texte:"Dans les règles. Lent. Mais solide devant un tribunal.",
+    type:"enquete", temps:4,
+    cout:{energie:3},
+    effet:{avancement:+11,reputation:+2},
+    rarete:"commun"
+  },
+  {
+    id:"croiser_sources",
+    nom:"Croiser les sources",
+    texte:"Trois témoignages contradictoires. Un seul peut être vrai. Peut-être aucun.",
+    type:"enquete", temps:3,
+    cout:{energie:2,stress:+1},
+    effet:{avancement:+9,moral:-1},
+    rarete:"commun"
+  },
+  {
+    id:"reunion_brigade",
+    nom:"Réunion de brigade",
+    texte:"Une heure de tableau blanc. Deux nouvelles pistes. Une qui tient.",
+    type:"enquete", temps:2,
+    cout:{energie:1},
+    effet:{avancement:+6,relations:+1},
+    rarete:"commun"
+  },
+  {
+    id:"expertise_labo",
+    nom:"Expertise labo",
+    texte:"Les résultats arrivent. Ils confirment ce que vous espériez ne pas trouver.",
+    type:"enquete", temps:3,
+    cout:{argent:25},
+    effet:{avancement:+15,stress:+1},
+    rarete:"peu_commun"
+  },
+  {
+    id:"filature",
+    nom:"Filature",
+    texte:"Vous le suivez depuis ce matin. Il ne vous a pas vu. Vous croyez.",
+    type:"enquete", temps:5,
+    cout:{energie:3,stress:+2},
+    effet:{avancement:+13,moral:-1},
+    rarete:"commun"
+  },
+  {
+    id:"contact_journaliste",
+    nom:"Contact journaliste",
+    texte:"Un échange d'informations. Vous donnez moins que vous prenez. Cette fois.",
+    type:"enquete", temps:2,
+    cout:{reputation:-1},
+    effet:{avancement:+8,relations:+1},
+    rarete:"peu_commun"
+  },
+  {
+    id:"dossier_archive",
+    nom:"Dossier d'archives",
+    texte:"L'affaire a des précédents. Quelqu'un savait. Avant vous.",
+    type:"enquete", temps:3,
+    cout:{energie:2},
+    effet:{avancement:+10,moral:-1,stress:+1},
+    rarete:"commun"
+  },
+
+  // ── PERSONNEL / RELATIONS ──────────────────────────────────────────────────
+  {
+    id:"appeler_famille",
+    nom:"Appeler la famille",
+    texte:"Leur voix vous rappelle pourquoi vous faites ça.",
+    type:"personnel", temps:1,
+    cout:{energie:1},
+    effet:{moral:+3,relations:+2},
+    rarete:"commun"
+  },
+  {
+    id:"parler_collegue",
+    nom:"Parler à un collègue",
+    texte:"Il comprend. Ce métier ronge tout le monde pareil.",
+    type:"personnel", temps:1,
+    cout:{energie:1},
+    effet:{moral:+2,stress:-1,relations:+1},
+    rarete:"commun"
+  },
+  {
+    id:"diner_famille",
+    nom:"Dîner en famille",
+    texte:"Pour une fois, vous êtes là. Vraiment là. Ils ne savent pas si ça durera.",
+    type:"personnel", temps:3,
+    cout:{argent:20},
+    effet:{moral:+4,relations:+4,stress:-2},
+    rarete:"peu_commun"
+  },
+  {
+    id:"lettre_conjoint",
+    nom:"Écrire à votre proche",
+    texte:"Vous n'envoyez pas la lettre. Mais vous l'avez écrite.",
+    type:"personnel", temps:1,
+    cout:{},
+    effet:{moral:+2,relations:+1},
+    rarete:"commun"
+  },
+  {
+    id:"confier_collegue",
+    nom:"Se confier",
+    texte:"Vous dites plus que prévu. Lui aussi. Rien ne sort de ce bureau.",
+    type:"personnel", temps:2,
+    cout:{energie:1},
+    effet:{moral:+3,stress:-2,relations:+2},
+    rarete:"peu_commun"
+  },
+
+  // ── SOIN / SANTÉ ───────────────────────────────────────────────────────────
+  {
+    id:"seance_psy",
+    nom:"Séance chez le psy",
+    texte:"Elle dit que vous refoulez. Vous acquiescez.",
+    type:"soin", temps:2,
+    cout:{argent:25,energie:1},
+    effet:{moral:+5,stress:-4},
+    rarete:"peu_commun"
+  },
+  {
+    id:"cafe_triple",
+    nom:"Triple expresso",
+    texte:"Votre cœur bat trop vite. Vous verrez ça plus tard.",
+    type:"stimulant", temps:1,
+    cout:{argent:4},
+    effet:{energie:+3,stress:+2},
+    rarete:"commun"
+  },
+  {
+    id:"medicaments",
+    nom:"Médicaments",
+    texte:"Ordonnance ou pas. Ça tient debout. C'est tout ce qui compte.",
+    type:"soin", temps:1,
+    cout:{argent:15},
+    effet:{energie:+3,stress:-2},
+    rarete:"peu_commun"
+  },
+  {
+    id:"arret_maladie",
+    nom:"Arrêt maladie",
+    texte:"Le médecin insiste. Vous résistez. Finalement vous cédez — deux jours.",
+    type:"soin", temps:8,
+    cout:{avancement:-6,reputation:-1},
+    effet:{energie:+7,moral:+3,stress:-5},
+    rarete:"rare"
+  },
+
+  // ── ADMINISTRATIF / ARGENT ─────────────────────────────────────────────────
+  {
+    id:"heures_sup",
+    nom:"Heures supplémentaires",
+    texte:"La prime ne compensera pas. Mais elle paie le loyer.",
+    type:"admin", temps:4,
+    cout:{energie:3,moral:-1,stress:+2},
+    effet:{argent:+40},
+    rarete:"commun"
+  },
+  {
+    id:"vendre_info",
+    nom:"Vendre une info",
+    texte:"À qui, exactement ? Vous préférez ne pas le savoir.",
+    type:"admin", temps:1,
+    cout:{reputation:-2,moral:-2},
+    effet:{argent:+50},
+    rarete:"rare"
+  },
+  {
+    id:"note_de_frais",
+    nom:"Note de frais",
+    texte:"Vous arrondissez les chiffres. Un peu. La comptabilité ne lit jamais vraiment.",
+    type:"admin", temps:1,
+    cout:{reputation:-1},
+    effet:{argent:+20},
+    rarete:"peu_commun"
+  },
+
+  // ── SURRÉALISTE ────────────────────────────────────────────────────────────
   {
     id:"reve_lucide",
     nom:"Rêve lucide",
     texte:"Dans le rêve, le coupable vous regarde. Vous reconnaissez ses yeux.",
-    type:"surréaliste",
-    temps:2,
+    type:"surréaliste", temps:3,
     cout:{},
-    effet:{avancement:+8,moral:-1,stress:+1},
-    rarete:"rare",
-    surreal:true
+    effet:{avancement:+10,moral:-1,stress:+2},
+    rarete:"rare", surreal:true
   },
   {
     id:"miroir_inverse",
     nom:"Le miroir se souvient",
-    texte:"Votre reflet a pris deux secondes de retard. Il sait quelque chose.",
-    type:"surréaliste",
-    temps:1,
+    texte:"Votre reflet a deux secondes de retard. Il sait quelque chose.",
+    type:"surréaliste", temps:1,
     cout:{moral:-1},
-    effet:{avancement:+5,stress:+3},
-    rarete:"rare",
-    surreal:true
+    effet:{avancement:+6,stress:+3},
+    rarete:"rare", surreal:true
   },
   {
     id:"lettre_anonyme",
     nom:"Lettre sans expéditeur",
-    texte:"Elle n'a pas de timbre. Elle était dans votre poche depuis le matin.",
-    type:"enquete",
-    temps:2,
+    texte:"Elle n'a pas de timbre. Elle était dans votre poche depuis ce matin.",
+    type:"surréaliste", temps:2,
     cout:{stress:+2},
     effet:{avancement:+14,moral:-2},
-    rarete:"rare"
+    rarete:"rare", surreal:true
+  },
+  {
+    id:"double_memoire",
+    nom:"Faux souvenir",
+    texte:"Vous vous rappelez clairement quelque chose qui ne s'est pas passé. Mais les détails sont vrais.",
+    type:"surréaliste", temps:2,
+    cout:{moral:-2},
+    effet:{avancement:+12,stress:+3},
+    rarete:"rare", surreal:true
+  },
+  {
+    id:"voix_radio",
+    nom:"Message dans le bruit",
+    texte:"Entre deux fréquences, quelqu'un dit votre nom. L'adresse que vous cherchiez depuis une semaine.",
+    type:"surréaliste", temps:1,
+    cout:{stress:+3},
+    effet:{avancement:+16},
+    rarete:"rare", surreal:true
+  },
+  {
+    id:"porte_inconnue",
+    nom:"La porte du fond",
+    texte:"Cette porte n'était pas là hier. Derrière : le bureau de la victime, intact.",
+    type:"surréaliste", temps:3,
+    cout:{moral:-2,stress:+2},
+    effet:{avancement:+18,energie:-1},
+    rarete:"rare", surreal:true
   },
 ];
 
 const EVENEMENTS_QUOTIDIENS = [
+  // ── MENACES ──
   {
     id:"menace",
     tag:"Menace",
     type:"lourd",
     texte:"Un suspect glisse une enveloppe sous votre porte. À l'intérieur : une photo de votre enfant. Pas de message.",
+    effets:{stress:+4,moral:-2},
+    choix:[
+      {texte:"Ignorer — garder le cap",effet:{avancement:-5}},
+      {texte:"Porter plainte",effet:{avancement:+8,relations:-1,stress:+2}}
+    ]
+  },
+  {
+    id:"filature_inverse",
+    tag:"Menace",
+    type:"lourd",
+    texte:"Quelqu'un vous suit depuis trois jours. Vous le voyez enfin. Il ne se cache plus.",
     effets:{stress:+3,moral:-2},
     choix:[
-      {texte:"Ignorer — garder le cap",effet:{avancement:-4}},
-      {texte:"Porter plainte",effet:{avancement:+8,relations:-1,stress:+1}}
+      {texte:"L'affronter",effet:{avancement:+8,stress:+2,reputation:-1}},
+      {texte:"Prévenir la hiérarchie",effet:{avancement:+3,reputation:+1}}
     ]
   },
   {
-    id:"soutien_collegue",
-    tag:"Quotidien",
-    type:"neutre",
-    texte:"Un collègue vous pose un café sur le bureau. « T'as l'air crevé. » Vous ne répondez rien.",
-    effets:{moral:+1,energie:+1},
-    choix:[]
-  },
-  {
-    id:"article_presse",
-    tag:"Presse",
+    id:"mise_en_garde",
+    tag:"Menace",
     type:"lourd",
-    texte:"Un journal publie un article vous accusant de corruption. La photo est truquée. Vous n'en êtes pas certain.",
-    effets:{reputation:-3,stress:+3,moral:-1},
+    texte:"Un avocat véreux vous remet une « mise en garde à l'amiable ». Douze pages. Votre nom partout.",
+    effets:{stress:+3,moral:-2,reputation:-2},
     choix:[
-      {texte:"Droit de réponse",effet:{argent:-20,reputation:+2}},
-      {texte:"Ignorer, rester concentré",effet:{avancement:+4}}
+      {texte:"Ignorer",effet:{avancement:+4}},
+      {texte:"Consulter un avocat",effet:{argent:-30,reputation:+2}}
     ]
   },
+
+  // ── FAMILLE ──
   {
     id:"enfant_malade",
     tag:"Famille",
@@ -896,44 +1135,9 @@ const EVENEMENTS_QUOTIDIENS = [
     texte:"Votre enfant est malade. L'école vous appelle. L'affaire attend. Votre famille, moins.",
     effets:{moral:-2,stress:+2},
     choix:[
-      {texte:"Partir le chercher",effet:{avancement:-8,relations:+4,moral:+2}},
-      {texte:"Envoyer quelqu'un d'autre",effet:{avancement:0,relations:-2,moral:-3}}
+      {texte:"Partir le chercher",effet:{avancement:-8,relations:+5,moral:+3}},
+      {texte:"Envoyer quelqu'un d'autre",effet:{avancement:0,relations:-3,moral:-3}}
     ]
-  },
-  {
-    id:"temoignage_inattendu",
-    tag:"Indice",
-    type:"positif",
-    texte:"Un inconnu vous aborde dans la rue. Il a vu quelque chose. Ses yeux ne mentent pas.",
-    effets:{avancement:+10},
-    choix:[]
-  },
-  {
-    id:"prime_refusee",
-    tag:"Hiérarchie",
-    type:"neutre",
-    texte:"Votre supérieur refuse votre demande de prime. « Attendez les résultats. » Les résultats attendent aussi.",
-    effets:{moral:-1,stress:+1},
-    choix:[
-      {texte:"Accepter en silence",effet:{reputation:+1}},
-      {texte:"Protester",effet:{reputation:-1,moral:+1}}
-    ]
-  },
-  {
-    id:"insomnie",
-    tag:"Corps",
-    type:"physique",
-    texte:"Vous n'arrivez pas à dormir. Vous revoyez la scène de crime. Encore. L'heure tourne.",
-    effets:{energie:-2,stress:+2},
-    choix:[]
-  },
-  {
-    id:"aide_inattendue",
-    tag:"Allié",
-    type:"positif",
-    texte:"Un avocat vous contacte. Il a des informations. Pas par bonté d'âme, mais ça suffit.",
-    effets:{avancement:+7,relations:+1},
-    choix:[]
   },
   {
     id:"dispute_conjoint",
@@ -947,25 +1151,236 @@ const EVENEMENTS_QUOTIDIENS = [
     ]
   },
   {
+    id:"anniversaire_oublie",
+    tag:"Famille",
+    type:"lourd",
+    texte:"Vous avez oublié l'anniversaire. Encore. Ils n'ont rien dit au dîner. C'est pire.",
+    effets:{moral:-4,relations:-3,stress:+2},
+    choix:[
+      {texte:"Rentrer avec des fleurs",effet:{argent:-20,relations:+3,moral:-1}},
+      {texte:"Appeler et s'excuser",effet:{relations:+1,moral:-2}}
+    ]
+  },
+  {
+    id:"visite_parents",
+    tag:"Famille",
+    type:"neutre",
+    texte:"Vos parents passent à l'improviste. Ils remarquent les cernes. Ils ne disent rien.",
+    effets:{moral:-1,stress:+1},
+    choix:[
+      {texte:"Passer du temps avec eux",effet:{moral:+3,relations:+2,avancement:-4}},
+      {texte:"Prétexte urgent",effet:{moral:-2,relations:-1}}
+    ]
+  },
+
+  // ── HIÉRARCHIE ──
+  {
+    id:"pression_hierarchie",
+    tag:"Hiérarchie",
+    type:"neutre",
+    texte:"Le commissaire veut des résultats « cette semaine ». Il tape sur le bureau pour appuyer le mot « semaine ».",
+    effets:{stress:+3,moral:-2},
+    choix:[
+      {texte:"Promettre des résultats",effet:{avancement:+5,stress:+2}},
+      {texte:"Expliquer la complexité",effet:{reputation:-1,moral:+1}}
+    ]
+  },
+  {
+    id:"prime_refusee",
+    tag:"Hiérarchie",
+    type:"neutre",
+    texte:"Votre supérieur refuse votre demande de prime. « Attendez les résultats. » Les résultats attendent aussi.",
+    effets:{moral:-2,stress:+1},
+    choix:[
+      {texte:"Accepter en silence",effet:{reputation:+1}},
+      {texte:"Protester",effet:{reputation:-1,moral:+1}}
+    ]
+  },
+  {
+    id:"mutation_proposee",
+    tag:"Hiérarchie",
+    type:"neutre",
+    texte:"On vous propose une mutation. Meilleure ville, meilleur poste. L'affaire resterait ici.",
+    effets:{moral:0,stress:+2},
+    choix:[
+      {texte:"Refuser — terminer l'affaire",effet:{moral:-1,avancement:+5}},
+      {texte:"Demander du temps",effet:{reputation:+1,stress:-1}}
+    ]
+  },
+  {
+    id:"convocation_igs",
+    tag:"Hiérarchie",
+    type:"lourd",
+    texte:"Convocation à l'IGS. Affaire de corruption. Votre nom cité. Ce n'est pas vous. Pas vraiment.",
+    effets:{stress:+4,moral:-3,reputation:-3},
+    choix:[
+      {texte:"Coopérer pleinement",effet:{reputation:+2,avancement:-6}},
+      {texte:"Rester vague",effet:{stress:+2,avancement:+4}}
+    ]
+  },
+
+  // ── PRESSE / RÉPUTATION ──
+  {
+    id:"article_presse",
+    tag:"Presse",
+    type:"lourd",
+    texte:"Un journal publie un article vous accusant de corruption. La photo est truquée. Vous n'en êtes pas certain.",
+    effets:{reputation:-3,stress:+3,moral:-1},
+    choix:[
+      {texte:"Droit de réponse",effet:{argent:-20,reputation:+2}},
+      {texte:"Ignorer, rester concentré",effet:{avancement:+4}}
+    ]
+  },
+  {
+    id:"bonne_presse",
+    tag:"Presse",
+    type:"positif",
+    texte:"Un journaliste écrit un portrait élogieux. Vous n'aimez pas votre photo. Mais ça aide.",
+    effets:{reputation:+3,moral:+1},
+    choix:[]
+  },
+
+  // ── CORPS / SANTÉ ──
+  {
+    id:"insomnie",
+    tag:"Corps",
+    type:"physique",
+    texte:"Vous n'arrivez pas à dormir. Vous revoyez la scène de crime. Encore. L'heure tourne.",
+    effets:{energie:-3,stress:+3},
+    choix:[]
+  },
+  {
+    id:"migraine",
+    tag:"Corps",
+    type:"physique",
+    texte:"Migraine depuis ce matin. Les néons du bureau pulsent. Les dossiers bougent.",
+    effets:{energie:-2,moral:-1,stress:+2},
+    choix:[
+      {texte:"Prendre un médicament et continuer",effet:{argent:-10,energie:+1}},
+      {texte:"Rentrer se coucher",effet:{avancement:-4,energie:+3,stress:-2}}
+    ]
+  },
+  {
+    id:"crise_panique",
+    tag:"Corps",
+    type:"physique",
+    texte:"Dans les toilettes du couloir. Dix minutes. Vous ne savez pas comment vous en êtes sorti.",
+    effets:{energie:-2,moral:-3,stress:+3},
+    choix:[
+      {texte:"Appeler votre psy",effet:{argent:-15,moral:+2,stress:-2}},
+      {texte:"Reprendre le travail",effet:{avancement:+4,stress:+2}}
+    ]
+  },
+
+  // ── INDICES / POSITIFS ──
+  {
+    id:"temoignage_inattendu",
+    tag:"Indice",
+    type:"positif",
+    texte:"Un inconnu vous aborde dans la rue. Il a vu quelque chose. Ses yeux ne mentent pas.",
+    effets:{avancement:+10},
+    choix:[]
+  },
+  {
+    id:"aide_inattendue",
+    tag:"Allié",
+    type:"positif",
+    texte:"Un avocat vous contacte. Il a des informations. Pas par bonté d'âme, mais ça suffit.",
+    effets:{avancement:+8,relations:+1},
+    choix:[]
+  },
+  {
+    id:"soutien_collegue",
+    tag:"Quotidien",
+    type:"neutre",
+    texte:"Un collègue vous pose un café sur le bureau. « T'as l'air crevé. » Vous ne répondez rien.",
+    effets:{moral:+1,energie:+1},
+    choix:[]
+  },
+  {
+    id:"document_fuite",
+    tag:"Indice",
+    type:"positif",
+    texte:"Un document confidentiel arrive dans votre boîte mail depuis une adresse inconnue. Il est réel.",
+    effets:{avancement:+12,stress:+1},
+    choix:[
+      {texte:"L'exploiter immédiatement",effet:{avancement:+6,reputation:-1}},
+      {texte:"Vérifier la source d'abord",effet:{avancement:+3,reputation:+1}}
+    ]
+  },
+
+  // ── ERREURS / REVERS ──
+  {
     id:"faux_suspect",
     tag:"Erreur",
     type:"lourd",
     texte:"Vous avez arrêté la mauvaise personne. Tout le monde le sait maintenant. Vous aussi.",
-    effets:{reputation:-4,moral:-3,stress:+3,avancement:-8},
+    effets:{reputation:-4,moral:-3,stress:+3,avancement:-10},
     choix:[]
   },
-  // Surréaliste
+  {
+    id:"preuve_irrecevable",
+    tag:"Erreur",
+    type:"lourd",
+    texte:"La preuve phare est irrecevable. Vice de procédure. Deux semaines de travail s'effondrent.",
+    effets:{avancement:-12,moral:-3,stress:+3},
+    choix:[
+      {texte:"Recommencer proprement",effet:{avancement:+5,energie:-2}},
+      {texte:"Trouver un contournement",effet:{avancement:+3,reputation:-2}}
+    ]
+  },
+  {
+    id:"temoins_se_retractent",
+    tag:"Revers",
+    type:"lourd",
+    texte:"Deux témoins se rétractent le même jour. Ça ne ressemble pas à une coïncidence.",
+    effets:{avancement:-8,moral:-2,stress:+3},
+    choix:[
+      {texte:"Chercher pourquoi",effet:{avancement:+6,energie:-2,stress:+1}},
+      {texte:"Passer aux autres pistes",effet:{avancement:-3}}
+    ]
+  },
+  {
+    id:"fuite_dossier",
+    tag:"Revers",
+    type:"lourd",
+    texte:"Des éléments du dossier ont fuité. Quelqu'un à l'intérieur. Vous ne savez pas qui.",
+    effets:{avancement:-8,reputation:-3,stress:+4,moral:-2},
+    choix:[
+      {texte:"Enquêter en interne",effet:{avancement:+5,relations:-2}},
+      {texte:"Cloisonner l'information",effet:{avancement:+3,reputation:+1}}
+    ]
+  },
+
+  // ── ARGENT ──
+  {
+    id:"facture_inattendue",
+    tag:"Finances",
+    type:"neutre",
+    texte:"Une facture que vous aviez oubliée. Ou repoussée. Le résultat est le même.",
+    effets:{argent:-30,moral:-1,stress:+1},
+    choix:[]
+  },
+  {
+    id:"remboursement_frais",
+    tag:"Finances",
+    type:"positif",
+    texte:"La comptabilité rembourse trois mois de frais d'un coup. Sans explication.",
+    effets:{argent:+45,moral:+1},
+    choix:[]
+  },
+
+  // ── SURRÉALISTE ──
   {
     id:"ombre_sans_corps",
     tag:"Anomalie",
     type:"surréaliste",
-    texte:"Ce matin, votre ombre ne correspond pas à votre position. Elle montre quelque chose — un endroit. Vous reconnaissez la rue.",
+    texte:"Ce matin, votre ombre ne correspond pas à votre position. Elle montre un endroit. Vous reconnaissez la rue.",
     effets:{stress:+2,avancement:+12},
     choix:[
-      {texte:"Suivre l'ombre",effet:{avancement:+8,moral:-2}},
-      {texte:"L'ignorer",effet:{stress:+1}}
-    ],
-    surreal:true
+      {texte:"Suivre l'ombre",effet:{avancement:+10,moral:-2,stress:+1}},
+      {texte:"L'ignorer",effet:{stress:+2}}
+    ], surreal:true
   },
   {
     id:"suspect_futur",
@@ -974,10 +1389,9 @@ const EVENEMENTS_QUOTIDIENS = [
     texte:"Le suspect principal vous remercie pour sa libération. Le procès est dans trois mois. Aujourd'hui, il n'a pas encore été arrêté.",
     effets:{stress:+4,moral:-2},
     choix:[
-      {texte:"Consigner dans le dossier",effet:{avancement:+5,reputation:-1}},
-      {texte:"Ne rien dire",effet:{stress:+2}}
-    ],
-    surreal:true
+      {texte:"Consigner dans le dossier",effet:{avancement:+6,reputation:-1}},
+      {texte:"Ne rien dire",effet:{stress:+3}}
+    ], surreal:true
   },
   {
     id:"telephone_absent",
@@ -986,19 +1400,36 @@ const EVENEMENTS_QUOTIDIENS = [
     texte:"Vous avez reçu un appel. Votre téléphone était éteint. Le numéro correspond à une personne décédée en 1987.",
     effets:{stress:+3,avancement:+9},
     choix:[
-      {texte:"Tenter de rappeler",effet:{moral:-3,avancement:+6}},
+      {texte:"Tenter de rappeler",effet:{moral:-3,avancement:+8}},
       {texte:"Effacer et oublier",effet:{stress:+1,moral:+1}}
-    ],
-    surreal:true
+    ], surreal:true
   },
   {
     id:"memo_double",
-    tag:"Quotidien",
+    tag:"Anomalie",
     type:"surréaliste",
-    texte:"Vous trouvez dans vos dossiers un mémo que vous ne vous souvenez pas avoir écrit. Les faits sont exacts. La date : demain.",
+    texte:"Vous trouvez un mémo que vous ne vous souvenez pas avoir écrit. Les faits sont exacts. La date : demain.",
     effets:{avancement:+15,moral:-2,stress:+2},
-    choix:[],
-    surreal:true
+    choix:[], surreal:true
+  },
+  {
+    id:"horloge_arretee",
+    tag:"Anomalie",
+    type:"surréaliste",
+    texte:"Toutes les horloges du commissariat s'arrêtent à la même heure. Celle du meurtre. Personne d'autre ne semble le remarquer.",
+    effets:{stress:+3,avancement:+8},
+    choix:[
+      {texte:"Photographier — noter dans le dossier",effet:{avancement:+6,reputation:-1}},
+      {texte:"Garder pour vous",effet:{moral:-2,stress:+1}}
+    ], surreal:true
+  },
+  {
+    id:"victime_vivante",
+    tag:"Anomalie",
+    type:"surréaliste",
+    texte:"La victime vous appelle. Sa voix. Son numéro. Elle dit : « Vous brûlez. »",
+    effets:{stress:+5,moral:-2,avancement:+14},
+    choix:[], surreal:true
   },
 ];
 
@@ -1007,7 +1438,7 @@ const EVENEMENTS_LOURDS = [
     id:"disparition_conjoint",
     tag:"Rupture",
     texte:"Votre conjoint a disparu. Son dernier message : « Je ne peux plus vivre avec tes absences. » La chambre est vide. Les clés sont là.",
-    effets:{moral:-5,relations:-5,stress:+4}
+    effets:{moral:-6,relations:-6,stress:+5}
   },
   {
     id:"menace_directe",
@@ -1019,26 +1450,50 @@ const EVENEMENTS_LOURDS = [
     id:"effondrement",
     tag:"Santé",
     texte:"Vous vous évanouissez dans le couloir du commissariat. Le médecin dit « épuisement sévère ». Vous retournez au bureau le lendemain.",
-    effets:{energie:-6,moral:-2,stress:+3}
+    effets:{energie:-7,moral:-3,stress:+4}
   },
   {
     id:"trahison_collegue",
     tag:"Trahison",
     texte:"Votre binôme transmettait des informations à l'ennemi depuis six semaines. Vous ne l'aviez pas vu venir.",
-    effets:{moral:-4,reputation:-3,avancement:-15,stress:+4}
+    effets:{moral:-5,reputation:-4,avancement:-18,stress:+5}
   },
   {
     id:"nuit_surreelle",
     tag:"Anomalie",
     texte:"Vous vous réveillez assis à votre bureau. La nuit entière manque. Sur votre bloc-notes : des noms, des adresses, une carte annotée. Vous ne les reconnaissez pas. L'enquête avance pourtant.",
-    effets:{avancement:+20,stress:+5,moral:-3},
+    effets:{avancement:+20,stress:+6,moral:-4},
     surreal:true
   },
   {
     id:"corps_reconnu",
     tag:"Choc",
     texte:"On a retrouvé un corps. Vous connaissez le visage. Pas de la scène de crime — d'ailleurs. De votre vie d'avant.",
-    effets:{moral:-5,stress:+4,avancement:+10}
+    effets:{moral:-6,stress:+5,avancement:+10}
+  },
+  {
+    id:"suspension",
+    tag:"Hiérarchie",
+    texte:"Suspension provisoire en attendant l'enquête interne. Vous gardez votre badge. Vous n'avez plus le droit de vous en servir.",
+    effets:{avancement:-15,reputation:-5,moral:-4,stress:+5}
+  },
+  {
+    id:"incendie_domicile",
+    tag:"Danger",
+    texte:"Votre appartement a brûlé cette nuit. Le rapport dit « accident ». Personne n'y croit.",
+    effets:{argent:-60,moral:-5,stress:+6,relations:-2}
+  },
+  {
+    id:"cible_proche",
+    tag:"Danger",
+    texte:"Quelqu'un a suivi votre enfant à la sortie de l'école. Personne n'a été blessé. Cette fois.",
+    effets:{moral:-6,stress:+6,relations:-3}
+  },
+  {
+    id:"fausse_preuve",
+    tag:"Revers",
+    texte:"Une pièce à conviction majeure était un faux. Fabriqué de toutes pièces. Vous avez bâti votre enquête dessus.",
+    effets:{avancement:-20,moral:-5,reputation:-4,stress:+4}
   },
 ];
 
@@ -1049,13 +1504,13 @@ let G = {};
 
 function initState() {
   G = {
-    energie: 10,
-    moral: 8,
-    relations: 7,
-    reputation: 8,
-    stress: 2,
+    energie: 8,    // moins de marge au départ
+    moral: 6,
+    relations: 6,
+    reputation: 7,
+    stress: 3,     // on démarre déjà un peu stressé
     avancement: 0,
-    argent: 120,
+    argent: 80,    // budget serré
     jour: 1,
     totalJours: 0,
     totalCartes: 0,
@@ -1286,12 +1741,15 @@ function afficherEvenement(event) {
   const logType = isSurreal ? 'surreal' : isLourd ? 'failure' : 'system';
   addLog(`"${event.texte.substring(0,60)}..."`, logType);
 
+  const surealEvtBadge = isSurreal ? `<div class="surreal-badge" style="margin-top:10px;" data-tip="Anomalie surréaliste : cet événement défie la logique du réel. Pas d'explication rationnelle — vos choix ont quand même des conséquences.">◈ Anomalie</div>` : '';
+
   area.innerHTML = `
     <div class="event-card ${cardCls}" style="animation-delay:0ms">
       <div class="event-tag ${tagCls}">${event.tag || 'Événement'}</div>
       <div class="event-text">${event.texte}</div>
       <div class="event-effects">${effetsHtml}</div>
       ${choixHtml}
+      ${surealEvtBadge}
     </div>
   `;
 
@@ -1329,6 +1787,7 @@ function afficherCartes() {
     const rarLabel = carte.rarete === 'rare' ? '◆' : carte.rarete === 'peu_commun' ? '◇' : '';
     const rarCls = carte.rarete === 'rare' ? 'rare' : '';
     const tempsLabel = `<span class="cost-tag" style="border-color:var(--accent-dim);color:var(--accent-dim);">⏱ ${carte.temps}h</span>`;
+    const surealBadge = carte.surreal ? `<div class="surreal-badge" data-tip="Événement surréaliste : cette carte échappe à la logique ordinaire. Ses effets peuvent sembler irrationnels — faites confiance à votre instinct, pas à la raison.">◈ Anomalie</div>` : '';
     const opacStyle = tooExpensive ? 'opacity:0.3;pointer-events:none;' : '';
     const titleAttr = tooExpensive ? `title="Pas assez de temps (${carte.temps}h nécessaires)"` : '';
     return `<div class="action-card ${isSurreal?'surreal':''}" style="animation-delay:${i*60}ms;${opacStyle}" ${titleAttr} onclick="jouerCarte('${carte.id}',this)" id="acard-${carte.id}">
@@ -1337,6 +1796,7 @@ function afficherCartes() {
       <div class="card-text">${carte.texte}</div>
       <div class="card-costs">${tempsLabel}${coutHtml}</div>
       <div class="card-effects">${effHtml}</div>
+      ${surealBadge}
     </div>`;
   }).join('');
 }
@@ -1400,14 +1860,18 @@ function nextDay() {
   G.totalJours = G.jour;
 
   // Dépenses quotidiennes
-  const loyer = 10;
+  const loyer = 15;  // plus cher
   const depenses = {argent: -loyer};
   appliquerEffets(depenses, false);
-  if (G.argent <= 0) addLog(`Vous n'avez plus d'argent.`, 'failure');
 
-  // Régénérations naturelles
-  const regen = {stress: -1};
-  appliquerEffets(regen, false);
+  // Accumulation naturelle de stress chaque jour
+  const usure = {stress: +1};
+  appliquerEffets(usure, false);
+
+  // Perte d'énergie naturelle si pas dormi
+  if (G.cartesJouees.filter(c => c.type === 'repos').length === 0) {
+    appliquerEffets({energie: -1}, false);
+  }
 
   majUI();
   nouvelleJournee();
