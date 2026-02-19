@@ -1,32 +1,1541 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <title>Double Jeu</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Double Jeu</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:           #080808;
+  --bg-raised:    #0e0e0e;
+  --bg-card:      #111111;
+  --bg-overlay:   rgba(8,8,8,0.96);
+  --text-primary: #ddd8cc;
+  --text-secondary:#8a8478;
+  --text-muted:   #4a4640;
+  --border:       #222018;
+  --border-mid:   #3a3630;
+  --border-active:#6a6050;
+  --accent:       #c8b07a;
+  --accent-dim:   #6b5e3f;
+  --accent-glow:  rgba(200,176,122,0.12);
+  --danger:       #9b4040;
+  --danger-dim:   #5a2525;
+  --danger-glow:  rgba(155,64,64,0.15);
+  --stress:       #7a5535;
+  --stress-bright:#c89060;
+  --good:         #3d6b50;
+  --good-bright:  #70b888;
+  --surreal:      #5a4a7a;
+  --surreal-bright:#b090e0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);}
+body{color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;line-height:1.7;overflow:hidden;}
+@media(max-width:640px){body{overflow-y:auto;}}
+
+/* ── NOISE OVERLAY ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:1000;opacity:0.35;
+}
+
+/* ── START SCREEN ── */
+#start-screen{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:28px;z-index:500;padding:32px;
+  transition:opacity 600ms ease;
+}
+#start-screen.fade-out{opacity:0;pointer-events:none;}
+#start-screen.hidden{display:none;}
+
+.start-eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.6rem;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--text-muted);
+}
+.start-title{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;font-size:4.5rem;
+  letter-spacing:0.06em;line-height:1.1;
+  color:var(--accent);text-align:center;
+}
+.start-title em{font-style:italic;color:var(--text-secondary);}
+.start-rule{width:120px;height:1px;background:var(--border-mid);}
+.start-tagline{
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;font-size:1.1rem;
+  color:var(--text-secondary);text-align:center;
+  max-width:420px;line-height:1.8;
+}
+.start-desc{
+  max-width:460px;text-align:center;
+  color:var(--text-muted);font-size:0.75rem;
+  line-height:1.9;letter-spacing:0.02em;
+}
+.btn-start{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;
+  padding:14px 44px;
+  background:transparent;cursor:pointer;
+  border:1px solid var(--accent-dim);color:var(--accent);
+  transition:all 300ms ease;margin-top:8px;
+  position:relative;overflow:hidden;
+}
+.btn-start::before{
+  content:'';position:absolute;inset:0;
+  background:var(--accent-glow);opacity:0;
+  transition:opacity 300ms;
+}
+.btn-start:hover::before{opacity:1;}
+.btn-start:hover{border-color:var(--accent);transform:translateY(-2px);}
+
+@media(max-width:640px){
+  .start-title{font-size:2.8rem;}
+}
+
+/* ── LAYOUT ── */
+#game{
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  height:100vh;
+  max-width:1060px;margin:0 auto;
+}
+@media(max-width:640px){#game{height:auto;min-height:100vh;}}
+
+/* ── TOPBAR ── */
+#topbar{
+  border-bottom:1px solid var(--border);
+  padding:10px 24px;
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--bg-raised);
+  gap:16px;flex-wrap:wrap;
+}
+.game-title{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;font-size:1.15rem;
+  letter-spacing:0.1em;color:var(--accent);
+  white-space:nowrap;
+}
+.game-title span{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.6rem;letter-spacing:0.25em;
+  color:var(--text-muted);display:block;
+  margin-top:1px;
+}
+.stats-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+.stat{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.stat-label{font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);}
+.stat-val{font-size:0.85rem;font-weight:500;color:var(--text-primary);}
+.stat-val.danger{color:var(--danger);}
+.stat-val.warn{color:var(--stress-bright);}
+.stat-val.good{color:var(--good-bright);}
+.stat-val.surreal{color:var(--surreal-bright);}
+.day-badge{
+  font-size:0.6rem;letter-spacing:0.2em;
+  color:var(--text-muted);border:1px solid var(--border);
+  padding:4px 10px;white-space:nowrap;
+}
+
+/* ── MAIN ── */
+#main{
+  display:grid;
+  grid-template-columns:1fr 320px;
+  overflow:hidden;
+  gap:0;
+}
+@media(max-width:760px){
+  #main{grid-template-columns:1fr;overflow-y:auto;}
+}
+#left-panel{overflow-y:auto;padding:20px 20px 20px 24px;border-right:1px solid var(--border);}
+#right-panel{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+
+/* ── PHASE HEADER ── */
+.phase-header{
+  display:flex;align-items:baseline;gap:12px;
+  margin-bottom:16px;
+}
+.phase-num{
+  font-size:0.55rem;letter-spacing:0.25em;text-transform:uppercase;
+  color:var(--text-muted);border:1px solid var(--border);
+  padding:3px 8px;
+}
+.phase-title{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:400;font-size:1.4rem;letter-spacing:0.04em;
+  color:var(--text-primary);
+}
+
+/* ── EVENT CARD ── */
+.event-card{
+  background:var(--bg-card);
+  border:1px solid var(--border-mid);
+  padding:18px 20px;
+  margin-bottom:20px;
+  position:relative;
+  animation:fadeUp 400ms ease backwards;
+}
+.event-card.heavy{
+  border-color:var(--danger-dim);
+  background:#120a0a;
+}
+.event-card.surreal{
+  border-color:var(--surreal);
+  background:#0e0b12;
+}
+.event-tag{
+  font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;
+  position:absolute;top:12px;right:12px;
+  border:1px solid var(--border);color:var(--text-muted);
+  padding:2px 7px;
+}
+.event-tag.heavy{border-color:var(--danger-dim);color:var(--danger);}
+.event-tag.surreal{border-color:var(--surreal);color:var(--surreal-bright);}
+.event-text{
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;font-size:1.05rem;
+  color:var(--text-secondary);line-height:1.75;
+  padding-right:60px;
+  margin-bottom:14px;
+}
+.event-effects{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;
+}
+.effect-pill{
+  font-size:0.6rem;letter-spacing:0.1em;
+  padding:3px 8px;border:1px solid;
+}
+.effect-pill.neg{border-color:var(--danger-dim);color:var(--danger);}
+.effect-pill.pos{border-color:var(--good);color:var(--good-bright);}
+.effect-pill.neutral{border-color:var(--border-mid);color:var(--text-muted);}
+.event-choices{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-choice{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.15em;
+  padding:8px 16px;cursor:pointer;
+  background:transparent;border:1px solid var(--border-mid);
+  color:var(--text-secondary);
+  transition:all 200ms;
+}
+.btn-choice:hover{border-color:var(--border-active);color:var(--text-primary);}
+.btn-choice.acted{opacity:0.4;cursor:default;}
+
+/* ── ACTION CARDS ── */
+.section-label{
+  font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:8px;
+  margin-bottom:20px;
+}
+.action-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  padding:14px;cursor:pointer;
+  transition:all 200ms ease;
+  position:relative;
+  animation:fadeUp 300ms ease backwards;
+}
+.action-card:hover{border-color:var(--border-active);background:#161410;}
+.action-card.played{opacity:0.3;cursor:default;pointer-events:none;}
+.action-card.surreal{border-color:var(--surreal);}
+.action-card.surreal:hover{border-color:var(--surreal-bright);}
+.card-name{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:600;font-size:1rem;
+  letter-spacing:0.02em;margin-bottom:6px;
+  color:var(--text-primary);
+}
+.card-text{
+  font-size:0.72rem;color:var(--text-muted);
+  line-height:1.6;margin-bottom:10px;
+  font-style:italic;
+}
+.card-costs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+.cost-tag{
+  font-size:0.55rem;letter-spacing:0.1em;
+  padding:2px 6px;border:1px solid var(--danger-dim);
+  color:var(--danger);
+}
+.card-effects{display:flex;gap:6px;flex-wrap:wrap;}
+.eff-tag{
+  font-size:0.55rem;letter-spacing:0.1em;
+  padding:2px 6px;border:1px solid;
+}
+.eff-tag.pos{border-color:var(--good);color:var(--good-bright);}
+.eff-tag.neg{border-color:var(--danger-dim);color:var(--danger);}
+.eff-tag.neutral{border-color:var(--border-mid);color:var(--text-muted);}
+.card-rarete{
+  position:absolute;top:8px;right:8px;
+  font-size:0.5rem;color:var(--accent-dim);
+}
+.card-rarete.rare{color:var(--surreal-bright);}
+
+/* ── TIME BAR ── */
+.time-bar-container{
+  margin-bottom:20px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  padding:12px 16px;
+}
+.time-bar-header{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:8px;
+}
+.time-bar-label{font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-muted);}
+.time-remaining{font-size:0.82rem;color:var(--accent);}
+.time-remaining.warn{color:var(--stress-bright);}
+.time-remaining.danger{color:var(--danger);}
+.time-slots{display:flex;gap:4px;}
+.time-slot{
+  height:8px;flex:1;
+  background:var(--border);
+  transition:background 300ms ease;
+}
+.time-slot.used{background:var(--border-mid);}
+.time-slot.active{background:var(--accent);}
+.time-slot.warn{background:var(--stress-bright);}
+.time-slot.danger-slot{background:var(--danger);}
+.time-exhausted-msg{
+  font-size:0.65rem;letter-spacing:0.1em;
+  color:var(--danger);margin-top:8px;
+  font-style:italic;
+}
+
+.section-block{background:var(--bg-card);border:1px solid var(--border);padding:14px;}
+.block-label{
+  font-size:0.55rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:12px;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+.gauge-row{margin-bottom:10px;}
+.gauge-name{
+  display:flex;justify-content:space-between;
+  font-size:0.65rem;letter-spacing:0.1em;margin-bottom:4px;
+}
+.gauge-name span:first-child{color:var(--text-secondary);}
+.gauge-name span:last-child{color:var(--text-primary);}
+.gauge-track{
+  height:4px;background:var(--border);
+  position:relative;overflow:hidden;
+}
+.gauge-fill{
+  height:100%;
+  transition:width 400ms ease, background-color 400ms;
+}
+.gauge-fill.energie{background:var(--accent);}
+.gauge-fill.moral{background:#7a9ab5;}
+.gauge-fill.relations{background:var(--good-bright);}
+.gauge-fill.reputation{background:#a08060;}
+.gauge-fill.stress{background:var(--danger);}
+.gauge-fill.avancement{background:var(--accent);}
+.gauge-fill.low{background:var(--danger)!important;}
+.gauge-fill.mid{background:var(--stress-bright)!important;}
+
+/* ── LOG ── */
+#log{
+  flex:1;min-height:120px;max-height:240px;
+  overflow-y:auto;
+  display:flex;flex-direction:column;gap:3px;
+}
+.log-entry{
+  font-size:0.68rem;letter-spacing:0.04em;
+  color:var(--text-muted);line-height:1.5;
+  padding:2px 0;border-bottom:1px solid var(--border);
+}
+.log-entry.success{color:var(--good-bright);}
+.log-entry.failure{color:var(--danger);}
+.log-entry.surreal{color:var(--surreal-bright);}
+.log-entry.warn{color:var(--stress-bright);}
+.log-entry.system{color:var(--accent-dim);}
+
+/* ── BOTTOM BAR ── */
+#bottombar{
+  border-top:1px solid var(--border);
+  padding:10px 24px;
+  background:var(--bg-raised);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.affaire-bar{
+  display:flex;align-items:center;gap:12px;flex:1;
+}
+.affaire-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);}
+.affaire-track{flex:1;height:6px;background:var(--border);position:relative;max-width:200px;}
+.affaire-fill{height:100%;background:var(--accent);transition:width 600ms ease;}
+.affaire-pct{font-size:0.7rem;color:var(--accent);}
+.btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:10px 20px;cursor:pointer;
+  background:transparent;border:1px solid var(--border-mid);
+  color:var(--text-secondary);
+  transition:all 200ms;white-space:nowrap;
+}
+.btn:hover{border-color:var(--border-active);color:var(--text-primary);}
+.btn.primary{border-color:var(--accent-dim);color:var(--accent);}
+.btn.primary:hover{background:var(--accent-glow);border-color:var(--accent);}
+.btn.danger-btn{border-color:var(--danger-dim);color:var(--danger);}
+.btn.danger-btn:hover{background:var(--danger-glow);}
+
+/* ── OVERLAY / MODAL ── */
+#overlay{
+  position:fixed;inset:0;
+  background:var(--bg-overlay);
+  display:flex;align-items:center;justify-content:center;
+  z-index:400;opacity:0;pointer-events:none;
+  transition:opacity 300ms;
+}
+#overlay.active{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--bg-raised);
+  border:1px solid var(--border-mid);
+  max-width:520px;width:90%;
+  max-height:80vh;overflow-y:auto;
+  padding:28px;
+  animation:fadeUp 300ms ease;
+}
+.modal-title{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;font-size:1.8rem;
+  letter-spacing:0.06em;color:var(--accent);
+  margin-bottom:8px;
+}
+.modal-sub{font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;}
+.modal-body{color:var(--text-secondary);font-size:0.8rem;line-height:1.9;margin-bottom:20px;}
+.modal-body strong{color:var(--text-primary);}
+.result-row{
+  display:flex;justify-content:space-between;
+  align-items:baseline;padding:6px 0;
+  border-bottom:1px solid var(--border);
+  font-size:0.8rem;
+}
+.result-row:last-child{border:none;}
+.result-label{color:var(--text-muted);font-size:0.65rem;letter-spacing:0.15em;}
+.result-val{color:var(--text-primary);}
+.result-val.good{color:var(--good-bright);}
+.result-val.bad{color:var(--danger);}
+
+/* ── GAME OVER ── */
+#gameover{
+  position:fixed;inset:0;
+  background:var(--bg-overlay);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;z-index:600;
+  opacity:0;pointer-events:none;transition:opacity 800ms;
+  text-align:center;padding:32px;
+}
+#gameover.active{opacity:1;pointer-events:all;}
+.go-title{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;font-style:italic;
+  font-size:3rem;color:var(--danger);letter-spacing:0.06em;
+}
+.go-reason{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1rem;color:var(--text-secondary);
+  max-width:400px;line-height:1.8;
+  font-style:italic;
+}
+.go-stats{
+  background:var(--bg-card);border:1px solid var(--border);
+  padding:16px 24px;min-width:280px;
+  margin:4px 0;
+}
+
+/* ── WIN SCREEN ── */
+#winscreen{
+  position:fixed;inset:0;
+  background:var(--bg-overlay);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;z-index:600;
+  opacity:0;pointer-events:none;transition:opacity 800ms;
+  text-align:center;padding:32px;
+}
+#winscreen.active{opacity:1;pointer-events:all;}
+.win-title{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;font-size:3rem;color:var(--accent);letter-spacing:0.06em;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(6px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes pulse{
+  0%,100%{opacity:1;}50%{opacity:0.4;}
+}
+.pulse{animation:pulse 1.5s ease infinite;}
+
+/* ── STAT FLASH ── */
+@keyframes flashRed{0%,100%{background:transparent;}50%{background:var(--danger-glow);}}
+@keyframes flashGold{0%,100%{background:transparent;}50%{background:var(--accent-glow);}}
+.flash-red{animation:flashRed 600ms ease;}
+.flash-gold{animation:flashGold 600ms ease;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-mid);}
+</style>
 </head>
 <body>
-    <h1>Double Jeu</h1>
-    <div id="jour">Jour 1</div>
 
-    <h2>Ressources</h2>
-    <div class="ressources">
-        <div class="jauge"><span>Énergie:</span> <progress id="energie" value="10" max="10"></progress></div>
-        <div class="jauge"><span>Moral:</span> <progress id="moral" value="5" max="10"></progress></div>
-        <div class="jauge"><span>Relations:</span> <progress id="relations" value="7" max="10"></progress></div>
-        <div class="jauge"><span>Réputation:</span> <progress id="reputation" value="8" max="10"></progress></div>
-        <div class="jauge"><span>Stress:</span> <progress id="stress" value="2" max="10"></progress></div>
-        <div class="jauge"><span>Avancement:</span> <progress id="avancement_affaire" value="0" max="100"></progress></div>
-        <div class="jauge"><span>Argent:</span> <span id="argent">100</span>€</div>
+<!-- START SCREEN -->
+<div id="start-screen">
+  <div class="start-eyebrow">Un jeu de gestion &amp; survie</div>
+  <div class="start-title">Double<br><em>Jeu</em></div>
+  <div class="start-rule"></div>
+  <div class="start-tagline">Vous êtes enquêteur·ice. L'affaire avance.<br>Votre vie, elle, recule.</div>
+  <div class="start-desc">
+    Vous avez 8 heures par jour. Pas plus. Chaque action prend du temps — choisissez bien.
+    Gérez énergie, moral, relations. Résistez aux événements surréalistes.
+    Résolvez l'affaire avant de vous effondrer.
+  </div>
+  <button class="btn-start" onclick="startGame()">Commencer l'enquête</button>
+</div>
+
+<!-- GAME -->
+<div id="game" style="display:none;">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="game-title">
+      Double Jeu
+      <span>Enquête en cours</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-label">Énergie</div>
+        <div class="stat-val" id="ui-energie">10</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Moral</div>
+        <div class="stat-val" id="ui-moral">5</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Relations</div>
+        <div class="stat-val" id="ui-relations">7</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Réputation</div>
+        <div class="stat-val" id="ui-reputation">8</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Stress</div>
+        <div class="stat-val" id="ui-stress">2</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Argent</div>
+        <div class="stat-val" id="ui-argent">100€</div>
+      </div>
+      <div class="day-badge" id="ui-day">Jour 1</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- LEFT PANEL -->
+    <div id="left-panel">
+      <!-- Phase header -->
+      <div class="phase-header">
+        <div class="phase-num" id="phase-num">Phase I</div>
+        <div class="phase-title" id="phase-title">Événement du jour</div>
+      </div>
+
+      <!-- Event -->
+      <div id="event-area"></div>
+
+      <!-- Time bar -->
+      <div class="time-bar-container" id="time-bar-container">
+        <div class="time-bar-header">
+          <div class="time-bar-label">Temps disponible aujourd'hui</div>
+          <div class="time-remaining" id="time-remaining">8h restantes</div>
+        </div>
+        <div class="time-slots" id="time-slots"></div>
+        <div class="time-exhausted-msg" id="time-exhausted-msg" style="display:none;">
+          Journée épuisée. Passez à demain.
+        </div>
+      </div>
+
+      <!-- Action cards -->
+      <div class="section-label">Actions disponibles</div>
+      <div class="cards-grid" id="cards-area"></div>
+
+      <!-- Played cards log -->
+      <div class="section-label" id="played-label" style="display:none;">Cartes jouées aujourd'hui</div>
+      <div class="cards-grid" id="played-area"></div>
     </div>
 
-    <h2>Événement du jour</h2>
-    <div id="evenement">Aucun événement pour l'instant.</div>
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <!-- Gauges -->
+      <div class="section-block">
+        <div class="block-label">État psychophysique</div>
+        <div class="gauge-row" id="g-energie">
+          <div class="gauge-name"><span>Énergie</span><span id="gv-energie">10/10</span></div>
+          <div class="gauge-track"><div class="gauge-fill energie" id="gf-energie" style="width:100%"></div></div>
+        </div>
+        <div class="gauge-row" id="g-moral">
+          <div class="gauge-name"><span>Moral</span><span id="gv-moral">5/10</span></div>
+          <div class="gauge-track"><div class="gauge-fill moral" id="gf-moral" style="width:50%"></div></div>
+        </div>
+        <div class="gauge-row" id="g-relations">
+          <div class="gauge-name"><span>Relations</span><span id="gv-relations">7/10</span></div>
+          <div class="gauge-track"><div class="gauge-fill relations" id="gf-relations" style="width:70%"></div></div>
+        </div>
+        <div class="gauge-row" id="g-reputation">
+          <div class="gauge-name"><span>Réputation</span><span id="gv-reputation">8/10</span></div>
+          <div class="gauge-track"><div class="gauge-fill reputation" id="gf-reputation" style="width:80%"></div></div>
+        </div>
+        <div class="gauge-row" id="g-stress">
+          <div class="gauge-name"><span>Stress</span><span id="gv-stress">2/10</span></div>
+          <div class="gauge-track"><div class="gauge-fill stress" id="gf-stress" style="width:20%"></div></div>
+        </div>
+      </div>
 
-    <h2>Vos Cartes</h2>
-    <div id="cartes-actions"></div>
+      <!-- Affaire -->
+      <div class="section-block">
+        <div class="block-label">Avancement de l'affaire</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <div class="affaire-track" style="flex:1;max-width:none;">
+            <div class="affaire-fill" id="affaire-fill" style="width:0%"></div>
+          </div>
+          <div class="affaire-pct" id="affaire-pct">0%</div>
+        </div>
+        <div id="affaire-desc" style="font-size:0.72rem;color:var(--text-muted);font-style:italic;line-height:1.6;">
+          Les dossiers s'accumulent. Quelqu'un ne veut pas que vous trouviez la vérité.
+        </div>
+      </div>
 
-    <button onclick="terminerJournee()">Terminer la journée</button>
+      <!-- Journal de bord -->
+      <div class="section-block" style="flex:1;display:flex;flex-direction:column;">
+        <div class="block-label">Journal de bord</div>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
 
-    <script src="script.js"></script>
+  <!-- BOTTOM BAR -->
+  <div id="bottombar">
+    <div class="affaire-bar">
+      <div class="affaire-label">Jour</div>
+      <div class="day-badge" id="day-bottom">1</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="openRulesModal()">Règles</button>
+      <button class="btn primary" id="btn-next-day" onclick="nextDay()">Journée suivante →</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY / MODAL -->
+<div id="overlay">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover">
+  <div class="go-title">Fin de l'enquête</div>
+  <div class="go-reason" id="go-reason"></div>
+  <div class="go-stats" id="go-stats"></div>
+  <button class="btn primary" onclick="restartGame()">Recommencer</button>
+</div>
+
+<!-- WIN -->
+<div id="winscreen">
+  <div class="win-title">Affaire résolue.</div>
+  <div class="go-reason" id="win-reason" style="color:var(--text-secondary)"></div>
+  <div class="go-stats" id="win-stats"></div>
+  <button class="btn primary" onclick="restartGame()">Nouvelle enquête</button>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   DONNÉES
+══════════════════════════════════════════════ */
+
+const CARTES = [
+  {
+    id:"dormir",
+    nom:"Dormir 8h",
+    texte:"Une nuit sans cauchemars. Presque.",
+    type:"repos",
+    temps:4,
+    cout:{energie:0},
+    effet:{energie:+5,moral:+1,stress:-1},
+    rarete:"commun"
+  },
+  {
+    id:"cafe_triple",
+    nom:"Triple expresso",
+    texte:"Votre cœur bat trop vite. Vous verrez ça plus tard.",
+    type:"stimulant",
+    temps:1,
+    cout:{argent:3},
+    effet:{energie:+3,stress:+1},
+    rarete:"commun"
+  },
+  {
+    id:"fouiller_illegal",
+    nom:"Fouille illégale",
+    texte:"Vous trouvez ce qu'il faut. Votre badge brille moins fort.",
+    type:"enquete",
+    temps:3,
+    cout:{energie:2,reputation:-1},
+    effet:{avancement:+12,stress:+2},
+    rarete:"commun"
+  },
+  {
+    id:"appeler_famille",
+    nom:"Appeler la famille",
+    texte:"Leur voix vous rappelle pourquoi vous faites ça.",
+    type:"personnel",
+    temps:1,
+    cout:{energie:1},
+    effet:{moral:+3,relations:+2},
+    rarete:"commun"
+  },
+  {
+    id:"taper_rapport",
+    nom:"Taper un rapport",
+    texte:"La bureaucratie avance, l'enquête aussi. Un peu.",
+    type:"enquete",
+    temps:2,
+    cout:{energie:2},
+    effet:{avancement:+6,reputation:+1},
+    rarete:"commun"
+  },
+  {
+    id:"interroger_temoin",
+    nom:"Interroger un témoin",
+    texte:"Ils savent quelque chose. Ils ne vous le diront peut-être pas.",
+    type:"enquete",
+    temps:3,
+    cout:{energie:3},
+    effet:{avancement:+10,stress:+1},
+    rarete:"commun"
+  },
+  {
+    id:"seance_psy",
+    nom:"Séance chez le psy",
+    texte:"Elle dit que vous refoulez. Vous acquiescez.",
+    type:"soin",
+    temps:2,
+    cout:{argent:20,energie:1},
+    effet:{moral:+4,stress:-3},
+    rarete:"peu_commun"
+  },
+  {
+    id:"boire_seul",
+    nom:"Boire seul·e",
+    texte:"Le fond du verre ne répond pas. Mais il écoute.",
+    type:"repos",
+    temps:2,
+    cout:{argent:10},
+    effet:{stress:-2,moral:-1,energie:-1},
+    rarete:"commun"
+  },
+  {
+    id:"soudoyer",
+    nom:"Soudoyer un informateur",
+    texte:"L'argent change de mains dans le noir. L'info aussi.",
+    type:"enquete",
+    temps:2,
+    cout:{argent:30,reputation:-1},
+    effet:{avancement:+18},
+    rarete:"peu_commun"
+  },
+  {
+    id:"faire_sport",
+    nom:"Courir 10km",
+    texte:"Vos pensées ne courent pas aussi vite. Pour l'instant.",
+    type:"repos",
+    temps:2,
+    cout:{energie:2},
+    effet:{energie:+3,stress:-2,moral:+1},
+    rarete:"commun"
+  },
+  {
+    id:"analyser_indices",
+    nom:"Analyser les indices",
+    texte:"La vérité est là, quelque part. Sous la surface.",
+    type:"enquete",
+    temps:3,
+    cout:{energie:3},
+    effet:{avancement:+15,moral:-1},
+    rarete:"peu_commun"
+  },
+  {
+    id:"prendre_conges",
+    nom:"Prendre un congé forcé",
+    texte:"Le commissaire vous y oblige. Vous obéissez. Pour une fois.",
+    type:"repos",
+    temps:6,
+    cout:{avancement:-5},
+    effet:{energie:+6,moral:+3,stress:-4},
+    rarete:"rare"
+  },
+  {
+    id:"infiltrer",
+    nom:"Infiltrer le milieu",
+    texte:"Vous n'êtes plus tout à fait vous-même ce soir.",
+    type:"enquete",
+    temps:5,
+    cout:{energie:4,moral:-1,stress:+2},
+    effet:{avancement:+22,relations:-1},
+    rarete:"rare"
+  },
+  {
+    id:"parler_collegue",
+    nom:"Parler à un·e collègue",
+    texte:"Elle comprend. Ce métier ronge tout le monde pareil.",
+    type:"personnel",
+    temps:1,
+    cout:{energie:1},
+    effet:{moral:+2,stress:-1,relations:+1},
+    rarete:"commun"
+  },
+  {
+    id:"manger_chaud",
+    nom:"Manger un vrai repas",
+    texte:"Pas un sandwich. Une assiette. Dans un restaurant avec des gens.",
+    type:"repos",
+    temps:1,
+    cout:{argent:15,energie:1},
+    effet:{energie:+2,moral:+2,stress:-1},
+    rarete:"commun"
+  },
+  {
+    id:"nuit_blanche",
+    nom:"Nuit blanche sur les dossiers",
+    texte:"L'aube vous trouve encore à votre bureau. Vous avancez.",
+    type:"enquete",
+    temps:7,
+    cout:{energie:5,stress:+3},
+    effet:{avancement:+20,moral:-2},
+    rarete:"peu_commun"
+  },
+  {
+    id:"reve_lucide",
+    nom:"Rêve lucide",
+    texte:"Dans le rêve, le coupable vous regarde. Vous reconnaissez ses yeux.",
+    type:"surréaliste",
+    temps:2,
+    cout:{},
+    effet:{avancement:+8,moral:-1,stress:+1},
+    rarete:"rare",
+    surreal:true
+  },
+  {
+    id:"miroir_inverse",
+    nom:"Le miroir se souvient",
+    texte:"Votre reflet a pris deux secondes de retard. Il sait quelque chose.",
+    type:"surréaliste",
+    temps:1,
+    cout:{moral:-1},
+    effet:{avancement:+5,stress:+3},
+    rarete:"rare",
+    surreal:true
+  },
+  {
+    id:"lettre_anonyme",
+    nom:"Lettre sans expéditeur",
+    texte:"Elle n'a pas de timbre. Elle était dans votre poche depuis le matin.",
+    type:"enquete",
+    temps:2,
+    cout:{stress:+2},
+    effet:{avancement:+14,moral:-2},
+    rarete:"rare"
+  },
+];
+
+const EVENEMENTS_QUOTIDIENS = [
+  {
+    id:"menace",
+    tag:"Menace",
+    type:"lourd",
+    texte:"Un suspect glisse une enveloppe sous votre porte. À l'intérieur : une photo de votre enfant. Pas de message.",
+    effets:{stress:+3,moral:-2},
+    choix:[
+      {texte:"Ignorer — garder le cap",effet:{avancement:-4}},
+      {texte:"Porter plainte",effet:{avancement:+8,relations:-1,stress:+1}}
+    ]
+  },
+  {
+    id:"soutien_collegue",
+    tag:"Quotidien",
+    type:"neutre",
+    texte:"Un·e collègue vous pose un café sur le bureau. « T'as l'air crevé·e. » Vous ne répondez rien.",
+    effets:{moral:+1,energie:+1},
+    choix:[]
+  },
+  {
+    id:"article_presse",
+    tag:"Presse",
+    type:"lourd",
+    texte:"Un journal publie un article vous accusant de corruption. La photo est truquée. Vous n'en êtes pas certain·e.",
+    effets:{reputation:-3,stress:+3,moral:-1},
+    choix:[
+      {texte:"Droit de réponse",effet:{argent:-20,reputation:+2}},
+      {texte:"Ignorer, rester concentré·e",effet:{avancement:+4}}
+    ]
+  },
+  {
+    id:"enfant_malade",
+    tag:"Famille",
+    type:"lourd",
+    texte:"Votre enfant est malade. L'école vous appelle. L'affaire attend. Votre famille, moins.",
+    effets:{moral:-2,stress:+2},
+    choix:[
+      {texte:"Partir le chercher",effet:{avancement:-8,relations:+4,moral:+2}},
+      {texte:"Envoyer quelqu'un d'autre",effet:{avancement:0,relations:-2,moral:-3}}
+    ]
+  },
+  {
+    id:"temoignage_inattendu",
+    tag:"Indice",
+    type:"positif",
+    texte:"Un·e inconnu·e vous aborde dans la rue. Il·elle a vu quelque chose. Ses yeux ne mentent pas.",
+    effets:{avancement:+10},
+    choix:[]
+  },
+  {
+    id:"prime_refusee",
+    tag:"Hiérarchie",
+    type:"neutre",
+    texte:"Votre supérieur·e refuse votre demande de prime. « Attendez les résultats. » Les résultats attendent aussi.",
+    effets:{moral:-1,stress:+1},
+    choix:[
+      {texte:"Accepter en silence",effet:{reputation:+1}},
+      {texte:"Protester",effet:{reputation:-1,moral:+1}}
+    ]
+  },
+  {
+    id:"insomnie",
+    tag:"Corps",
+    type:"physique",
+    texte:"Vous n'arrivez pas à dormir. Vous revoyez la scène de crime. Encore. L'heure tourne.",
+    effets:{energie:-2,stress:+2},
+    choix:[]
+  },
+  {
+    id:"aide_inattendue",
+    tag:"Allié",
+    type:"positif",
+    texte:"Un·e avocat·e vous contacte. Il·elle a des informations. Pas par bonté d'âme, mais ça suffit.",
+    effets:{avancement:+7,relations:+1},
+    choix:[]
+  },
+  {
+    id:"dispute_conjoint",
+    tag:"Famille",
+    type:"lourd",
+    texte:"« Tu es encore en retard. » C'est la troisième fois cette semaine. Le silence qui suit est plus lourd que les mots.",
+    effets:{moral:-3,relations:-2,stress:+2},
+    choix:[
+      {texte:"S'excuser, promettre de changer",effet:{relations:+3,avancement:-5}},
+      {texte:"Expliquer l'importance de l'affaire",effet:{relations:-1,avancement:+3}}
+    ]
+  },
+  {
+    id:"faux_suspect",
+    tag:"Erreur",
+    type:"lourd",
+    texte:"Vous avez arrêté la mauvaise personne. Tout le monde le sait maintenant. Vous aussi.",
+    effets:{reputation:-4,moral:-3,stress:+3,avancement:-8},
+    choix:[]
+  },
+  // Surréaliste
+  {
+    id:"ombre_sans_corps",
+    tag:"Anomalie",
+    type:"surréaliste",
+    texte:"Ce matin, votre ombre ne correspond pas à votre position. Elle montre quelque chose — un endroit. Vous reconnaissez la rue.",
+    effets:{stress:+2,avancement:+12},
+    choix:[
+      {texte:"Suivre l'ombre",effet:{avancement:+8,moral:-2}},
+      {texte:"L'ignorer",effet:{stress:+1}}
+    ],
+    surreal:true
+  },
+  {
+    id:"suspect_futur",
+    tag:"Anomalie",
+    type:"surréaliste",
+    texte:"Le suspect principal vous remercie pour sa libération. Le procès est dans trois mois. Aujourd'hui, il n'a pas encore été arrêté.",
+    effets:{stress:+4,moral:-2},
+    choix:[
+      {texte:"Consigner dans le dossier",effet:{avancement:+5,reputation:-1}},
+      {texte:"Ne rien dire",effet:{stress:+2}}
+    ],
+    surreal:true
+  },
+  {
+    id:"telephone_absent",
+    tag:"Anomalie",
+    type:"surréaliste",
+    texte:"Vous avez reçu un appel. Votre téléphone était éteint. Le numéro correspond à une personne décédée en 1987.",
+    effets:{stress:+3,avancement:+9},
+    choix:[
+      {texte:"Tenter de rappeler",effet:{moral:-3,avancement:+6}},
+      {texte:"Effacer et oublier",effet:{stress:+1,moral:+1}}
+    ],
+    surreal:true
+  },
+  {
+    id:"memo_double",
+    tag:"Quotidien",
+    type:"surréaliste",
+    texte:"Vous trouvez dans vos dossiers un mémo que vous ne vous souvenez pas avoir écrit. Les faits sont exacts. La date : demain.",
+    effets:{avancement:+15,moral:-2,stress:+2},
+    choix:[],
+    surreal:true
+  },
+];
+
+const EVENEMENTS_LOURDS = [
+  {
+    id:"disparition_conjoint",
+    tag:"Rupture",
+    texte:"Votre conjoint·e a disparu. Son dernier message : « Je ne peux plus vivre avec tes absences. » La chambre est vide. Les clés sont là.",
+    effets:{moral:-5,relations:-5,stress:+4}
+  },
+  {
+    id:"menace_directe",
+    tag:"Danger",
+    texte:"Quelqu'un a taillé deux lettres dans la peinture de votre voiture. « STOP ». La lame était neuve.",
+    effets:{stress:+5,moral:-3,reputation:-2}
+  },
+  {
+    id:"effondrement",
+    tag:"Santé",
+    texte:"Vous vous évanouissez dans le couloir du commissariat. Le médecin dit « épuisement sévère ». Vous retournez au bureau le lendemain.",
+    effets:{energie:-6,moral:-2,stress:+3}
+  },
+  {
+    id:"trahison_collegue",
+    tag:"Trahison",
+    texte:"Votre binôme transmettait des informations à l'ennemi depuis six semaines. Vous ne l'aviez pas vu venir.",
+    effets:{moral:-4,reputation:-3,avancement:-15,stress:+4}
+  },
+  {
+    id:"nuit_surreelle",
+    tag:"Anomalie",
+    texte:"Vous vous réveillez assis·e à votre bureau. La nuit entière manque. Sur votre bloc-notes : des noms, des adresses, une carte annotée. Vous ne les reconnaissez pas. L'enquête avance pourtant.",
+    effets:{avancement:+20,stress:+5,moral:-3},
+    surreal:true
+  },
+  {
+    id:"corps_reconnu",
+    tag:"Choc",
+    texte:"On a retrouvé un corps. Vous connaissez le visage. Pas de la scène de crime — d'ailleurs. De votre vie d'avant.",
+    effets:{moral:-5,stress:+4,avancement:+10}
+  },
+];
+
+/* ══════════════════════════════════════════════
+   ÉTAT DU JEU
+══════════════════════════════════════════════ */
+let G = {};
+
+function initState() {
+  G = {
+    energie: 10,
+    moral: 8,
+    relations: 7,
+    reputation: 8,
+    stress: 2,
+    avancement: 0,
+    argent: 120,
+    jour: 1,
+    totalJours: 0,
+    totalCartes: 0,
+    tempsTotal: 8,
+    tempsRestant: 8,
+    cartesDuJour: [],
+    cartesJouees: [],
+    eventRepondu: false,
+  };
+}
+
+/* ══════════════════════════════════════════════
+   FONCTIONS UTILITAIRES
+══════════════════════════════════════════════ */
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+function appliquerEffets(effets, animate=true) {
+  for (const [stat, delta] of Object.entries(effets)) {
+    if (G[stat] === undefined) continue;
+    const before = G[stat];
+    G[stat] += delta;
+    if (stat === 'stress') G[stat] = Math.max(0, G[stat]);
+    else if (stat === 'argent') G[stat] = Math.max(0, G[stat]);
+    else if (stat === 'avancement') G[stat] = clamp(G[stat], 0, 100);
+    else G[stat] = clamp(G[stat], 0, 10);
+    if (animate && G[stat] !== before) {
+      const isGood = G[stat] > before;
+      flashGauge(stat, isGood);
+    }
+  }
+  majUI();
+  verifierFin();
+}
+
+function flashGauge(stat, good) {
+  const el = document.getElementById(`g-${stat}`);
+  if (!el) return;
+  el.classList.remove('flash-red','flash-gold');
+  void el.offsetWidth;
+  el.classList.add(good ? 'flash-gold' : 'flash-red');
+  setTimeout(()=>el.classList.remove('flash-red','flash-gold'), 700);
+}
+
+function addLog(msg, type='system') {
+  const log = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = `J.${G.jour} — ${msg}`;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+  while(log.children.length > 40) log.removeChild(log.firstChild);
+}
+
+function majTemps() {
+  const slots = document.getElementById('time-slots');
+  const rem = document.getElementById('time-remaining');
+  const msg = document.getElementById('time-exhausted-msg');
+  if (!slots) return;
+
+  slots.innerHTML = '';
+  for (let i = 0; i < G.tempsTotal; i++) {
+    const s = document.createElement('div');
+    s.className = 'time-slot';
+    if (i >= G.tempsRestant) {
+      s.classList.add('used');
+    } else {
+      const pct = G.tempsRestant / G.tempsTotal;
+      if (pct <= 0.25) s.classList.add('danger-slot');
+      else if (pct <= 0.5) s.classList.add('warn');
+      else s.classList.add('active');
+    }
+    slots.appendChild(s);
+  }
+
+  rem.textContent = `${G.tempsRestant}h restante${G.tempsRestant > 1 ? 's' : ''}`;
+  const pct = G.tempsRestant / G.tempsTotal;
+  rem.className = `time-remaining ${pct <= 0.25 ? 'danger' : pct <= 0.5 ? 'warn' : ''}`;
+
+  if (G.tempsRestant <= 0) {
+    msg.style.display = 'block';
+    // Griser toutes les cartes non jouées
+    document.querySelectorAll('.action-card:not(.played)').forEach(el => {
+      el.style.opacity = '0.25';
+      el.style.pointerEvents = 'none';
+    });
+  } else {
+    msg.style.display = 'none';
+    // Griser cartes trop chères en temps
+    document.querySelectorAll('.action-card:not(.played)').forEach(el => {
+      const id = el.id.replace('acard-', '');
+      const carte = G.cartesDuJour.find(c => c.id === id);
+      if (carte && carte.temps > G.tempsRestant) {
+        el.style.opacity = '0.3';
+        el.style.pointerEvents = 'none';
+        el.title = `Pas assez de temps (${carte.temps}h nécessaires)`;
+      } else if (carte) {
+        el.style.opacity = '';
+        el.style.pointerEvents = '';
+        el.title = '';
+      }
+    });
+  }
+}
+
+
+  // Top stats
+  const statNames = ['energie','moral','relations','reputation','stress','argent'];
+  for (const s of statNames) {
+    const el = document.getElementById(`ui-${s}`);
+    if (!el) continue;
+    if (s === 'argent') {
+      el.textContent = `${G.argent}€`;
+      el.className = `stat-val ${G.argent > 80 ? 'good' : G.argent > 30 ? 'warn' : 'danger'}`;
+    } else {
+      el.textContent = G[s];
+      const v = G[s];
+      const max = s === 'stress' ? 10 : 10;
+      let cls = '';
+      if (s === 'stress') cls = v >= 8 ? 'danger' : v >= 5 ? 'warn' : 'good';
+      else cls = v <= 2 ? 'danger' : v <= 4 ? 'warn' : 'good';
+      el.className = `stat-val ${cls}`;
+    }
+  }
+  document.getElementById('ui-day').textContent = `Jour ${G.jour}`;
+  document.getElementById('day-bottom').textContent = G.jour;
+
+  // Gauges
+  const gauges = ['energie','moral','relations','reputation','stress'];
+  for (const s of gauges) {
+    const fill = document.getElementById(`gf-${s}`);
+    const val = document.getElementById(`gv-${s}`);
+    if (!fill || !val) continue;
+    const pct = (G[s] / 10) * 100;
+    fill.style.width = pct + '%';
+    val.textContent = `${G[s]}/10`;
+    fill.classList.remove('low','mid');
+    if (s === 'stress') {
+      if (G[s] >= 8) fill.classList.add('low');
+      else if (G[s] >= 5) fill.classList.add('mid');
+    } else {
+      if (G[s] <= 2) fill.classList.add('low');
+      else if (G[s] <= 4) fill.classList.add('mid');
+    }
+  }
+
+  // Avancement
+  document.getElementById('affaire-fill').style.width = G.avancement + '%';
+  document.getElementById('affaire-pct').textContent = G.avancement + '%';
+
+  // Desc affaire
+  const descs = [
+    "Les dossiers s'accumulent. Quelqu'un ne veut pas que vous trouviez la vérité.",
+    "Des fils commencent à apparaître. Vous tirez doucement.",
+    "Les connexions se précisent. L'enquête prend forme.",
+    "Vous approchez. Les menaces se font plus directes.",
+    "La vérité est à portée. Mais à quel prix ?",
+  ];
+  const idx = Math.min(Math.floor(G.avancement / 20), 4);
+  document.getElementById('affaire-desc').textContent = descs[idx];
+
+  majTemps();
+}
+
+/* ══════════════════════════════════════════════
+   LOGIQUE JOURNÉE
+══════════════════════════════════════════════ */
+function nouvelleJournee() {
+  G.cartesJouees = [];
+  G.eventRepondu = false;
+  G.tempsRestant = G.tempsTotal;
+  document.getElementById('played-label').style.display = 'none';
+  document.getElementById('played-area').innerHTML = '';
+  document.getElementById('time-exhausted-msg').style.display = 'none';
+
+  majUI();
+
+  // Piocher 4 cartes aléatoires
+  const shuffled = [...CARTES].sort(() => Math.random() - 0.5);
+  G.cartesDuJour = shuffled.slice(0, 4);
+
+  // Choisir un événement
+  let pool;
+  if (G.jour % 10 === 0) {
+    pool = EVENEMENTS_LOURDS;
+    document.getElementById('phase-num').textContent = '⚠ Phase Critique';
+    document.getElementById('phase-title').textContent = 'Événement grave';
+  } else {
+    pool = EVENEMENTS_QUOTIDIENS;
+    document.getElementById('phase-num').textContent = `Phase ${G.jour}`;
+    document.getElementById('phase-title').textContent = 'Événement du jour';
+  }
+
+  const event = pool[Math.floor(Math.random() * pool.length)];
+  afficherEvenement(event);
+  afficherCartes();
+  majUI();
+}
+
+function afficherEvenement(event) {
+  const area = document.getElementById('event-area');
+  const isSurreal = event.surreal;
+  const isLourd = event.type === 'lourd' || EVENEMENTS_LOURDS.includes(event);
+  const tagCls = isSurreal ? 'surreal' : isLourd ? 'heavy' : '';
+  const cardCls = isSurreal ? 'surreal' : isLourd ? 'heavy' : '';
+
+  // Build effets pills
+  const effetsHtml = Object.entries(event.effets || {}).map(([k,v]) => {
+    const nom = {energie:'Énergie',moral:'Moral',relations:'Relations',reputation:'Réputation',stress:'Stress',avancement:'Enquête',argent:'Argent'}[k] || k;
+    const cls = v > 0 ? (k==='stress'?'neg':'pos') : (k==='stress'?'pos':'neg');
+    const sign = v > 0 ? '+' : '';
+    return `<span class="effect-pill ${cls}">${nom} ${sign}${v}</span>`;
+  }).join('');
+
+  // Apply immediate (non-choice) effects
+  if (event.effets) appliquerEffets(event.effets);
+
+  // Choix
+  let choixHtml = '';
+  if (event.choix && event.choix.length > 0) {
+    choixHtml = '<div class="event-choices">';
+    event.choix.forEach((c, i) => {
+      const effStr = JSON.stringify(c.effet).replace(/"/g,"'");
+      choixHtml += `<button class="btn-choice" id="choice-btn-${i}" onclick="choisirOption(${i}, ${effStr.replace(/'/g,'"')}, this)">${c.texte}</button>`;
+    });
+    choixHtml += '</div>';
+  }
+
+  const logType = isSurreal ? 'surreal' : isLourd ? 'failure' : 'system';
+  addLog(`"${event.texte.substring(0,60)}..."`, logType);
+
+  area.innerHTML = `
+    <div class="event-card ${cardCls}" style="animation-delay:0ms">
+      <div class="event-tag ${tagCls}">${event.tag || 'Événement'}</div>
+      <div class="event-text">${event.texte}</div>
+      <div class="event-effects">${effetsHtml}</div>
+      ${choixHtml}
+    </div>
+  `;
+
+  if (!event.choix || event.choix.length === 0) G.eventRepondu = true;
+}
+
+function choisirOption(idx, effet, btn) {
+  if (G.eventRepondu) return;
+  G.eventRepondu = true;
+  document.querySelectorAll('.btn-choice').forEach(b => {
+    b.classList.add('acted');
+    b.onclick = null;
+  });
+  btn.style.borderColor = 'var(--accent-dim)';
+  btn.style.color = 'var(--accent)';
+  appliquerEffets(effet);
+  addLog(`Choix : « ${btn.textContent} »`, 'system');
+}
+
+function afficherCartes() {
+  const area = document.getElementById('cards-area');
+  area.innerHTML = G.cartesDuJour.map((carte, i) => {
+    const isSurreal = carte.surreal;
+    const tooExpensive = carte.temps > G.tempsRestant;
+    const coutHtml = Object.entries(carte.cout).filter(([,v])=>v!==0).map(([k,v]) => {
+      const nom = {energie:'Én.',moral:'Moral',stress:'Stress',argent:'€',reputation:'Rép.',avancement:'Enq.'}[k]||k;
+      return `<span class="cost-tag">${nom} ${v>0?'+':''}${v}</span>`;
+    }).join('');
+    const effHtml = Object.entries(carte.effet).map(([k,v]) => {
+      const nom = {energie:'Énergie',moral:'Moral',relations:'Relations',reputation:'Réputation',stress:'Stress',avancement:'Enquête',argent:'Argent'}[k]||k;
+      const pos = v > 0 ? (k==='stress'?false:true) : (k==='stress'?true:false);
+      const sign = v > 0 ? '+' : '';
+      return `<span class="eff-tag ${pos?'pos':'neg'}">${nom} ${sign}${v}</span>`;
+    }).join('');
+    const rarLabel = carte.rarete === 'rare' ? '◆' : carte.rarete === 'peu_commun' ? '◇' : '';
+    const rarCls = carte.rarete === 'rare' ? 'rare' : '';
+    const tempsLabel = `<span class="cost-tag" style="border-color:var(--accent-dim);color:var(--accent-dim);">⏱ ${carte.temps}h</span>`;
+    const opacStyle = tooExpensive ? 'opacity:0.3;pointer-events:none;' : '';
+    const titleAttr = tooExpensive ? `title="Pas assez de temps (${carte.temps}h nécessaires)"` : '';
+    return `<div class="action-card ${isSurreal?'surreal':''}" style="animation-delay:${i*60}ms;${opacStyle}" ${titleAttr} onclick="jouerCarte('${carte.id}',this)" id="acard-${carte.id}">
+      ${rarLabel ? `<div class="card-rarete ${rarCls}">${rarLabel}</div>` : ''}
+      <div class="card-name">${carte.nom}</div>
+      <div class="card-text">${carte.texte}</div>
+      <div class="card-costs">${tempsLabel}${coutHtml}</div>
+      <div class="card-effects">${effHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function jouerCarte(id, el) {
+  if (el.classList.contains('played')) return;
+  if (G.tempsRestant <= 0) {
+    addLog('Plus de temps aujourd\'hui.', 'warn');
+    return;
+  }
+  const carte = CARTES.find(c=>c.id===id);
+  if (!carte) return;
+
+  // Vérifier temps disponible
+  if (carte.temps > G.tempsRestant) {
+    addLog(`Pas assez de temps pour « ${carte.nom} » (${carte.temps}h nécessaires, ${G.tempsRestant}h restantes).`, 'warn');
+    return;
+  }
+
+  // Vérifier coûts ressources
+  for (const [stat, cout] of Object.entries(carte.cout)) {
+    if (cout < 0) continue;
+    if (G[stat] !== undefined && G[stat] < cout) {
+      addLog(`Impossible : pas assez de ${stat}.`, 'warn');
+      return;
+    }
+  }
+
+  // Consommer le temps
+  G.tempsRestant -= carte.temps;
+
+  // Appliquer coûts
+  const coutsFinal = {};
+  for (const [stat, val] of Object.entries(carte.cout)) {
+    if (val > 0) coutsFinal[stat] = -val;
+  }
+  appliquerEffets(coutsFinal, false);
+  appliquerEffets(carte.effet);
+
+  el.classList.add('played');
+  G.cartesJouees.push(carte);
+  G.totalCartes++;
+
+  addLog(`[${carte.temps}h] « ${carte.nom} »`, carte.surreal ? 'surreal' : 'success');
+
+  // Move to played zone
+  const playedArea = document.getElementById('played-area');
+  document.getElementById('played-label').style.display = 'flex';
+  const mini = document.createElement('div');
+  mini.className = 'action-card played';
+  mini.style.opacity = '0.4';
+  mini.innerHTML = `<div class="card-name">${carte.nom}</div><div class="card-text" style="font-size:0.6rem;">${carte.temps}h utilisées</div>`;
+  playedArea.appendChild(mini);
+
+  // Refresh time display (majTemps is called via majUI via appliquerEffets)
+  majTemps();
+}
+
+function nextDay() {
+  G.jour++;
+  G.totalJours = G.jour;
+
+  // Dépenses quotidiennes
+  const loyer = 10;
+  const depenses = {argent: -loyer};
+  appliquerEffets(depenses, false);
+  if (G.argent <= 0) addLog(`Vous n'avez plus d'argent.`, 'failure');
+
+  // Régénérations naturelles
+  const regen = {stress: -1};
+  appliquerEffets(regen, false);
+
+  majUI();
+  nouvelleJournee();
+  addLog(`— Jour ${G.jour} commence. Loyer : -${loyer}€`, 'system');
+}
+
+/* ══════════════════════════════════════════════
+   VÉRIF FIN DE JEU
+══════════════════════════════════════════════ */
+function verifierFin() {
+  if (G.avancement >= 100) {
+    setTimeout(()=>{
+      afficherVictoire();
+    }, 600);
+    return;
+  }
+  const reasons = [];
+  if (G.energie <= 0) reasons.push("Effondrement physique total. Votre corps a rendu les armes avant votre esprit.");
+  if (G.moral <= 0) reasons.push("Burn-out sévère. Vous n'avez plus la force de tenir debout, encore moins de chercher la vérité.");
+  if (G.relations <= 0) reasons.push("Votre famille est partie. Il ne reste que le dossier et le silence.");
+  if (G.stress >= 10) reasons.push("La pression a eu raison de vous. Une nuit, vous avez simplement disparu.");
+  if (G.argent <= 0 && G.jour > 5) reasons.push("Ruiné·e. Vous ne pouvez plus payer votre loyer, ni votre silence.");
+
+  if (reasons.length > 0) {
+    setTimeout(()=>{
+      afficherGameOver(reasons[0]);
+    }, 400);
+  }
+}
+
+function afficherGameOver(reason) {
+  const go = document.getElementById('gameover');
+  document.getElementById('go-reason').textContent = reason;
+  document.getElementById('go-stats').innerHTML = `
+    <div class="result-row"><span class="result-label">Jours tenus</span><span class="result-val">${G.totalJours}</span></div>
+    <div class="result-row"><span class="result-label">Avancement</span><span class="result-val ${G.avancement>50?'good':'bad'}">${G.avancement}%</span></div>
+    <div class="result-row"><span class="result-label">Cartes jouées</span><span class="result-val">${G.totalCartes}</span></div>
+    <div class="result-row"><span class="result-label">Réputation finale</span><span class="result-val">${G.reputation}/10</span></div>
+  `;
+  go.classList.add('active');
+}
+
+function afficherVictoire() {
+  const win = document.getElementById('winscreen');
+
+  const endings = [
+    {min:0, max:3, text:"L'affaire est résolue. Votre famille ne l'est pas. Dans le couloir du tribunal, vous cherchez un visage familier. Il n'y en a aucun."},
+    {min:4, max:6, text:"Vous avez résolu l'affaire. À quel prix ? Vous comptez les pertes. Certaines ne se comptent pas."},
+    {min:7, max:10, text:"L'affaire est classée. Votre nom sera peut-être mentionné. Vous, vous regardez par la fenêtre et vous pensez à autre chose."},
+  ];
+  const moral = G.moral;
+  const ending = endings.find(e => moral >= e.min && moral <= e.max) || endings[1];
+
+  document.getElementById('win-reason').textContent = ending.text;
+  document.getElementById('win-stats').innerHTML = `
+    <div class="result-row"><span class="result-label">Jours d'enquête</span><span class="result-val">${G.totalJours}</span></div>
+    <div class="result-row"><span class="result-label">Moral final</span><span class="result-val ${G.moral>6?'good':G.moral>3?'':'bad'}">${G.moral}/10</span></div>
+    <div class="result-row"><span class="result-label">Relations</span><span class="result-val ${G.relations>5?'good':'bad'}">${G.relations}/10</span></div>
+    <div class="result-row"><span class="result-label">Réputation</span><span class="result-val">${G.reputation}/10</span></div>
+    <div class="result-row"><span class="result-label">Argent restant</span><span class="result-val">${G.argent}€</span></div>
+  `;
+  win.classList.add('active');
+}
+
+/* ══════════════════════════════════════════════
+   MODAL RÈGLES
+══════════════════════════════════════════════ */
+function openRulesModal() {
+  const modal = document.getElementById('modal-content');
+  modal.innerHTML = `
+    <div class="modal-title">Règles du jeu</div>
+    <div class="modal-sub">Double Jeu — Guide de survie</div>
+    <div class="modal-body">
+      <strong>Objectif</strong><br>
+      Faire avancer l'enquête à 100% avant de vous effondrer. Chaque journée vous coûte des ressources. Chaque choix laisse des traces.
+      <br><br>
+      <strong>Le temps — la ressource centrale</strong><br>
+      Vous disposez de <strong>8 heures par jour</strong>, affichées en haut des cartes. Chaque action en consomme un certain nombre — de 1h (un café) à 7h (une nuit blanche). Les cartes que vous ne pouvez plus vous permettre en temps s'assombrissent. Choisissez avec soin : vous ne pourrez pas tout faire.
+      <br><br>
+      <strong>Ressources</strong><br>
+      Vous gérez 6 jauges : Énergie, Moral, Relations, Réputation, Stress et Argent. Si l'Énergie, le Moral ou les Relations tombent à 0, c'est la fin. Si le Stress atteint 10, c'est la fin.
+      <br><br>
+      <strong>Chaque jour</strong><br>
+      Un événement arrive — vous pouvez parfois choisir comment réagir. Quatre cartes-actions sont proposées. Quand vous n'avez plus de temps ou que vous avez fait vos choix, passez à la journée suivante.
+      <br><br>
+      <strong>Tous les 10 jours</strong><br>
+      Un événement grave se déclenche. Préparez-vous.
+      <br><br>
+      <strong>Fins multiples</strong><br>
+      Si vous gagnez, la fin dépend de votre Moral final. Le sacrifice a un coût narratif.
+    </div>
+    <button class="btn primary" onclick="closeModal()">Fermer</button>
+  `;
+  document.getElementById('overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('active');
+}
+
+/* ══════════════════════════════════════════════
+   DÉMARRAGE
+══════════════════════════════════════════════ */
+function startGame() {
+  const ss = document.getElementById('start-screen');
+  ss.classList.add('fade-out');
+  setTimeout(()=>{
+    ss.classList.add('hidden');
+    document.getElementById('game').style.display = 'grid';
+    initState();
+    majUI();
+    nouvelleJournee();
+    addLog('Enquête ouverte. Bonne chance.', 'system');
+  }, 650);
+}
+
+function restartGame() {
+  document.getElementById('gameover').classList.remove('active');
+  document.getElementById('winscreen').classList.remove('active');
+  initState();
+  majUI();
+  nouvelleJournee();
+  addLog('Nouvelle enquête. Encore.', 'system');
+}
+
+document.getElementById('overlay').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
+</script>
 </body>
 </html>
