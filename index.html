@@ -23,8 +23,8 @@
   --danger:       #9b4040;
   --danger-dim:   #5a2525;
   --danger-glow:  rgba(155,64,64,0.15);
-  --stress:       #7a5535;
-  --stress-bright:#c89060;
+  --stress:       #6b4a7a;
+  --stress-bright:#c090e0;
   --good:         #3d6b50;
   --good-bright:  #70b888;
   --surreal:      #5a4a7a;
@@ -106,21 +106,20 @@ body::before{
   height:100vh;
   max-width:1060px;margin:0 auto;
 }
-@media(max-width:640px){#game{height:auto;min-height:100vh;}}
 
 /* ── TOPBAR ── */
 #topbar{
   border-bottom:1px solid var(--border);
-  padding:10px 24px;
+  padding:10px 20px;
   display:flex;justify-content:space-between;align-items:center;
   background:var(--bg-raised);
-  gap:16px;flex-wrap:wrap;
+  gap:12px;flex-wrap:wrap;
 }
 .game-title{
   font-family:'Cormorant Garamond',serif;
   font-weight:300;font-size:1.15rem;
   letter-spacing:0.1em;color:var(--accent);
-  white-space:nowrap;
+  white-space:nowrap;flex-shrink:0;
 }
 .game-title span{
   font-family:'IBM Plex Mono',monospace;
@@ -128,8 +127,32 @@ body::before{
   color:var(--text-muted);display:block;
   margin-top:1px;
 }
-.stats-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
-.stat{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.stats-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.stat{
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  position:relative;cursor:help;
+}
+/* Stat tooltip */
+.stat::after{
+  content:attr(data-tip);
+  position:absolute;
+  top:calc(100% + 10px);
+  left:50%;transform:translateX(-50%);
+  background:#0e0e0e;
+  border:1px solid var(--border-mid);
+  color:var(--text-secondary);
+  font-size:0.62rem;line-height:1.6;
+  padding:8px 12px;
+  width:200px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 200ms;
+  z-index:300;
+  letter-spacing:0.02em;
+  font-style:italic;
+  text-align:center;
+}
+.stat:hover::after{opacity:1;}
 .stat-label{font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);}
 .stat-val{font-size:0.85rem;font-weight:500;color:var(--text-primary);}
 .stat-val.danger{color:var(--danger);}
@@ -139,21 +162,82 @@ body::before{
 .day-badge{
   font-size:0.6rem;letter-spacing:0.2em;
   color:var(--text-muted);border:1px solid var(--border);
-  padding:4px 10px;white-space:nowrap;
+  padding:4px 10px;white-space:nowrap;flex-shrink:0;
 }
 
 /* ── MAIN ── */
 #main{
   display:grid;
-  grid-template-columns:1fr 320px;
+  grid-template-columns:1fr 300px;
   overflow:hidden;
   gap:0;
 }
-@media(max-width:760px){
-  #main{grid-template-columns:1fr;overflow-y:auto;}
-}
 #left-panel{overflow-y:auto;padding:20px 20px 20px 24px;border-right:1px solid var(--border);}
-#right-panel{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+#right-panel{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+
+/* ── MOBILE LAYOUT ── */
+@media(max-width:760px){
+  html,body{height:auto;}
+  body{overflow-y:auto;overflow-x:hidden;}
+  #game{
+    height:auto;min-height:100vh;
+    grid-template-rows:auto auto auto auto;
+  }
+  #topbar{
+    padding:10px 14px;
+    flex-direction:column;align-items:flex-start;
+    gap:10px;
+  }
+  .stats-row{
+    gap:10px;width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+  }
+  .stat{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    padding:6px 8px;
+    border-radius:0;
+    align-items:flex-start;
+  }
+  /* On mobile, tooltip appears above */
+  .stat::after{
+    top:auto;
+    bottom:calc(100% + 8px);
+    font-size:0.6rem;
+    width:180px;
+  }
+  .game-title{font-size:1rem;}
+  #main{
+    grid-template-columns:1fr;
+    overflow:visible;
+    display:flex;flex-direction:column;
+  }
+  #left-panel{
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    overflow:visible;
+    padding:16px 14px;
+  }
+  #right-panel{
+    overflow:visible;
+    padding:14px;
+    gap:10px;
+  }
+  .cards-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+  }
+  #bottombar{
+    padding:10px 14px;
+    flex-wrap:wrap;gap:8px;
+  }
+  .btn{padding:10px 14px;font-size:0.58rem;}
+  .stat-val{font-size:0.8rem;}
+  /* Gauge rows on mobile: bigger touch targets */
+  .gauge-row{margin-bottom:12px;}
+  .gauge-track{height:6px;}
+}
 
 /* ── PHASE HEADER ── */
 .phase-header{
@@ -359,14 +443,42 @@ body::before{
   height:100%;
   transition:width 400ms ease, background-color 400ms;
 }
-.gauge-fill.energie{background:var(--accent);}
+.gauge-fill.energie{background:#c8b07a;}
 .gauge-fill.moral{background:#7a9ab5;}
 .gauge-fill.relations{background:var(--good-bright);}
 .gauge-fill.reputation{background:#a08060;}
-.gauge-fill.stress{background:var(--danger);}
+.gauge-fill.stress{background:var(--stress-bright);}
 .gauge-fill.avancement{background:var(--accent);}
 .gauge-fill.low{background:var(--danger)!important;}
-.gauge-fill.mid{background:var(--stress-bright)!important;}
+.gauge-fill.mid{background:#b87a30!important;}
+
+/* Stress gauge mid/high states use its own color family */
+.gauge-fill.stress.mid{background:#a060c0!important;}
+.gauge-fill.stress.low{background:#cc44cc!important;}
+
+/* Gauge tooltips */
+.gauge-tip{
+  position:relative;cursor:help;
+  font-size:0.65rem;color:var(--text-secondary);
+}
+.gauge-tip::after{
+  content:attr(data-tip);
+  position:absolute;
+  left:0;top:calc(100% + 6px);
+  background:#0e0e0e;
+  border:1px solid var(--border-mid);
+  color:var(--text-secondary);
+  font-size:0.6rem;line-height:1.6;
+  padding:6px 10px;
+  width:200px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 200ms;
+  z-index:200;
+  letter-spacing:0.02em;
+  font-style:italic;
+}
+.gauge-tip:hover::after{opacity:1;}
 
 /* ── LOG ── */
 #log{
@@ -540,27 +652,27 @@ body::before{
       <span>Enquête en cours</span>
     </div>
     <div class="stats-row">
-      <div class="stat">
+      <div class="stat" data-tip="Votre carburant physique. Trop faible, vous ne pouvez plus agir. Tombe à 0 — c'est la fin.">
         <div class="stat-label">Énergie</div>
         <div class="stat-val" id="ui-energie">10</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-tip="Votre résistance psychologique. S'effrite sous les coups durs, les sacrifices, les mauvais choix. Tombe à 0 — burn-out.">
         <div class="stat-label">Moral</div>
         <div class="stat-val" id="ui-moral">5</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-tip="Vos liens avec votre famille et vos proches. Chaque heure volée à l'enquête les fragilise. Tombe à 0 — ils sont partis.">
         <div class="stat-label">Relations</div>
         <div class="stat-val" id="ui-relations">7</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-tip="Votre crédibilité professionnelle. Chaque raccourci, chaque compromis la grignote. Elle influence vos chances de succès.">
         <div class="stat-label">Réputation</div>
         <div class="stat-val" id="ui-reputation">8</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-tip="La pression accumulée. Monte chaque jour, s'emballe avec les coups durs. Atteint 10 — vous craquez.">
         <div class="stat-label">Stress</div>
         <div class="stat-val" id="ui-stress">2</div>
       </div>
-      <div class="stat">
+      <div class="stat" data-tip="Vos liquidités. Le loyer tombe chaque soir. Certaines actions coûtent cher. À sec trop longtemps — c'est la fin.">
         <div class="stat-label">Argent</div>
         <div class="stat-val" id="ui-argent">100€</div>
       </div>
@@ -608,23 +720,38 @@ body::before{
       <div class="section-block">
         <div class="block-label">État psychophysique</div>
         <div class="gauge-row" id="g-energie">
-          <div class="gauge-name"><span>Énergie</span><span id="gv-energie">10/10</span></div>
+          <div class="gauge-name">
+            <span class="gauge-tip" data-tip="Carburant physique — tombe à 0, c'est la fin">Énergie ⓘ</span>
+            <span id="gv-energie">10/10</span>
+          </div>
           <div class="gauge-track"><div class="gauge-fill energie" id="gf-energie" style="width:100%"></div></div>
         </div>
         <div class="gauge-row" id="g-moral">
-          <div class="gauge-name"><span>Moral</span><span id="gv-moral">5/10</span></div>
+          <div class="gauge-name">
+            <span class="gauge-tip" data-tip="Résistance psychologique — tombe à 0, burn-out">Moral ⓘ</span>
+            <span id="gv-moral">5/10</span>
+          </div>
           <div class="gauge-track"><div class="gauge-fill moral" id="gf-moral" style="width:50%"></div></div>
         </div>
         <div class="gauge-row" id="g-relations">
-          <div class="gauge-name"><span>Relations</span><span id="gv-relations">7/10</span></div>
+          <div class="gauge-name">
+            <span class="gauge-tip" data-tip="Liens familiaux et proches — tombe à 0, ils sont partis">Relations ⓘ</span>
+            <span id="gv-relations">7/10</span>
+          </div>
           <div class="gauge-track"><div class="gauge-fill relations" id="gf-relations" style="width:70%"></div></div>
         </div>
         <div class="gauge-row" id="g-reputation">
-          <div class="gauge-name"><span>Réputation</span><span id="gv-reputation">8/10</span></div>
+          <div class="gauge-name">
+            <span class="gauge-tip" data-tip="Crédibilité professionnelle — influence vos chances de succès">Réputation ⓘ</span>
+            <span id="gv-reputation">8/10</span>
+          </div>
           <div class="gauge-track"><div class="gauge-fill reputation" id="gf-reputation" style="width:80%"></div></div>
         </div>
         <div class="gauge-row" id="g-stress">
-          <div class="gauge-name"><span>Stress</span><span id="gv-stress">2/10</span></div>
+          <div class="gauge-name">
+            <span class="gauge-tip" data-tip="Pression accumulée — monte chaque jour. Atteint 10, vous craquez">Stress ⓘ</span>
+            <span id="gv-stress">2/10</span>
+          </div>
           <div class="gauge-track"><div class="gauge-fill stress" id="gf-stress" style="width:20%"></div></div>
         </div>
       </div>
@@ -1627,9 +1754,8 @@ function majUI() {
     } else {
       el.textContent = G[s];
       const v = G[s];
-      const max = s === 'stress' ? 10 : 10;
       let cls = '';
-      if (s === 'stress') cls = v >= 8 ? 'danger' : v >= 5 ? 'warn' : 'good';
+      if (s === 'stress') cls = v >= 8 ? 'surreal' : v >= 5 ? 'warn' : 'good';
       else cls = v <= 2 ? 'danger' : v <= 4 ? 'warn' : 'good';
       el.className = `stat-val ${cls}`;
     }
