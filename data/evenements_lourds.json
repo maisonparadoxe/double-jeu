@@ -1,0 +1,20 @@
+[
+    {
+        "id": "disparition_conjoint",
+        "texte": "Votre conjoint·e a disparu. Son dernier message : *‘Je ne peux plus vivre avec tes mensonges.’* La police vous regarde bizarrement.",
+        "effets": {"moral": -5, "relations": -5, "stress": 4},
+        "rarete": 0.1
+    },
+    {
+        "id": "article_presse",
+        "texte": "Un journal publie un article vous accusant de corruption. La photo est truquée... ou peut-être pas.",
+        "effets": {"reputation": -4, "stress": 3},
+        "rarete": 0.2
+    },
+    {
+        "id": "suicide_collegue",
+        "texte": "Votre collègue se suicide dans le bureau. Il a laissé un mot : *‘Ils savent que tu sais.’*",
+        "effets": {"moral": -4, "stress": 5, "reputation": -2},
+        "rarete": 0.1
+    }
+]
