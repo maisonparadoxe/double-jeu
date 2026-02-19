@@ -1,0 +1,28 @@
+[
+    {
+        "id": "menace_suspect",
+        "texte": "Un suspect vous envoie une lettre avec une balle dedans. *‘Arrête de fouiller.’*",
+        "effets": {"moral": -2, "stress": 3},
+        "choix": [
+            {"texte": "Ignorer", "effet": {"avancement_affaire": -5}},
+            {"texte": "Porter plainte", "effet": {"avancement_affaire": 10, "relations": -1}}
+        ],
+        "rarete": 0.2
+    },
+    {
+        "id": "soutien_collegue",
+        "texte": "Un·e collègue vous offre un café. *‘Tu as l’air crevé·e.’*",
+        "effets": {"moral": 1, "energie": 1},
+        "rarete": 0.5
+    },
+    {
+        "id": "enfant_malade",
+        "texte": "Votre enfant est malade. L’emmener chez le médecin ?",
+        "effets": {"stress": 2},
+        "choix": [
+            {"texte": "Prendre la journée", "effet": {"energie": -3, "relations": 2, "avancement_affaire": -5}},
+            {"texte": "Laisser votre conjoint·e gérer", "effet": {"relations": -1}}
+        ],
+        "rarete": 0.3
+    }
+]
