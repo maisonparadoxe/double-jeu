@@ -495,13 +495,13 @@ body::before{
   <div class="start-eyebrow">Un jeu de gestion &amp; survie</div>
   <div class="start-title">Double<br><em>Jeu</em></div>
   <div class="start-rule"></div>
-  <div class="start-tagline">Vous êtes enquêteur·ice. L'affaire avance.<br>Votre vie, elle, recule.</div>
+  <div class="start-tagline">Vous êtes enquêteur. L'affaire avance.<br>Votre vie, elle, recule.</div>
   <div class="start-desc">
     Vous avez 8 heures par jour. Pas plus. Chaque action prend du temps — choisissez bien.
     Gérez énergie, moral, relations. Résistez aux événements surréalistes.
     Résolvez l'affaire avant de vous effondrer.
   </div>
-  <button class="btn-start" onclick="startGame()">Commencer l'enquête</button>
+  <button class="btn-start" onclick="startGame()">Commencer le jeu</button>
 </div>
 
 <!-- GAME -->
@@ -736,7 +736,7 @@ const CARTES = [
   },
   {
     id:"boire_seul",
-    nom:"Boire seul·e",
+    nom:"Boire seul",
     texte:"Le fond du verre ne répond pas. Mais il écoute.",
     type:"repos",
     temps:2,
@@ -796,7 +796,7 @@ const CARTES = [
   },
   {
     id:"parler_collegue",
-    nom:"Parler à un·e collègue",
+    nom:"Parler à un collègue",
     texte:"Elle comprend. Ce métier ronge tout le monde pareil.",
     type:"personnel",
     temps:1,
@@ -874,7 +874,7 @@ const EVENEMENTS_QUOTIDIENS = [
     id:"soutien_collegue",
     tag:"Quotidien",
     type:"neutre",
-    texte:"Un·e collègue vous pose un café sur le bureau. « T'as l'air crevé·e. » Vous ne répondez rien.",
+    texte:"Un collègue vous pose un café sur le bureau. « T'as l'air crevé. » Vous ne répondez rien.",
     effets:{moral:+1,energie:+1},
     choix:[]
   },
@@ -882,11 +882,11 @@ const EVENEMENTS_QUOTIDIENS = [
     id:"article_presse",
     tag:"Presse",
     type:"lourd",
-    texte:"Un journal publie un article vous accusant de corruption. La photo est truquée. Vous n'en êtes pas certain·e.",
+    texte:"Un journal publie un article vous accusant de corruption. La photo est truquée. Vous n'en êtes pas certain.",
     effets:{reputation:-3,stress:+3,moral:-1},
     choix:[
       {texte:"Droit de réponse",effet:{argent:-20,reputation:+2}},
-      {texte:"Ignorer, rester concentré·e",effet:{avancement:+4}}
+      {texte:"Ignorer, rester concentré",effet:{avancement:+4}}
     ]
   },
   {
@@ -904,7 +904,7 @@ const EVENEMENTS_QUOTIDIENS = [
     id:"temoignage_inattendu",
     tag:"Indice",
     type:"positif",
-    texte:"Un·e inconnu·e vous aborde dans la rue. Il·elle a vu quelque chose. Ses yeux ne mentent pas.",
+    texte:"Un inconnu vous aborde dans la rue. Il a vu quelque chose. Ses yeux ne mentent pas.",
     effets:{avancement:+10},
     choix:[]
   },
@@ -912,7 +912,7 @@ const EVENEMENTS_QUOTIDIENS = [
     id:"prime_refusee",
     tag:"Hiérarchie",
     type:"neutre",
-    texte:"Votre supérieur·e refuse votre demande de prime. « Attendez les résultats. » Les résultats attendent aussi.",
+    texte:"Votre supérieur refuse votre demande de prime. « Attendez les résultats. » Les résultats attendent aussi.",
     effets:{moral:-1,stress:+1},
     choix:[
       {texte:"Accepter en silence",effet:{reputation:+1}},
@@ -931,7 +931,7 @@ const EVENEMENTS_QUOTIDIENS = [
     id:"aide_inattendue",
     tag:"Allié",
     type:"positif",
-    texte:"Un·e avocat·e vous contacte. Il·elle a des informations. Pas par bonté d'âme, mais ça suffit.",
+    texte:"Un avocat vous contacte. Il a des informations. Pas par bonté d'âme, mais ça suffit.",
     effets:{avancement:+7,relations:+1},
     choix:[]
   },
@@ -1006,7 +1006,7 @@ const EVENEMENTS_LOURDS = [
   {
     id:"disparition_conjoint",
     tag:"Rupture",
-    texte:"Votre conjoint·e a disparu. Son dernier message : « Je ne peux plus vivre avec tes absences. » La chambre est vide. Les clés sont là.",
+    texte:"Votre conjoint a disparu. Son dernier message : « Je ne peux plus vivre avec tes absences. » La chambre est vide. Les clés sont là.",
     effets:{moral:-5,relations:-5,stress:+4}
   },
   {
@@ -1030,7 +1030,7 @@ const EVENEMENTS_LOURDS = [
   {
     id:"nuit_surreelle",
     tag:"Anomalie",
-    texte:"Vous vous réveillez assis·e à votre bureau. La nuit entière manque. Sur votre bloc-notes : des noms, des adresses, une carte annotée. Vous ne les reconnaissez pas. L'enquête avance pourtant.",
+    texte:"Vous vous réveillez assis à votre bureau. La nuit entière manque. Sur votre bloc-notes : des noms, des adresses, une carte annotée. Vous ne les reconnaissez pas. L'enquête avance pourtant.",
     effets:{avancement:+20,stress:+5,moral:-3},
     surreal:true
   },
@@ -1160,7 +1160,7 @@ function majTemps() {
   }
 }
 
-
+function majUI() {
   // Top stats
   const statNames = ['energie','moral','relations','reputation','stress','argent'];
   for (const s of statNames) {
@@ -1429,7 +1429,7 @@ function verifierFin() {
   if (G.moral <= 0) reasons.push("Burn-out sévère. Vous n'avez plus la force de tenir debout, encore moins de chercher la vérité.");
   if (G.relations <= 0) reasons.push("Votre famille est partie. Il ne reste que le dossier et le silence.");
   if (G.stress >= 10) reasons.push("La pression a eu raison de vous. Une nuit, vous avez simplement disparu.");
-  if (G.argent <= 0 && G.jour > 5) reasons.push("Ruiné·e. Vous ne pouvez plus payer votre loyer, ni votre silence.");
+  if (G.argent <= 0 && G.jour > 5) reasons.push("Ruiné. Vous ne pouvez plus payer votre loyer, ni votre silence.");
 
   if (reasons.length > 0) {
     setTimeout(()=>{
@@ -1533,8 +1533,13 @@ function restartGame() {
   addLog('Nouvelle enquête. Encore.', 'system');
 }
 
-document.getElementById('overlay').addEventListener('click', function(e){
-  if(e.target === this) closeModal();
+document.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.getElementById('overlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e){
+      if(e.target === this) closeModal();
+    });
+  }
 });
 </script>
 </body>
