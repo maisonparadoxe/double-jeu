@@ -1,1 +1,42 @@
-a
+[
+    {
+        "id": "dormir",
+        "nom": "Dormir 8h",
+        "cout": {"temps": 8, "argent": 0},
+        "effet": {"energie": 5, "moral": 1},
+        "texte": "Une nuit réparatrice. Les cauchemars attendront demain.",
+        "rarete": 0.8
+    },
+    {
+        "id": "fouiller_illégal",
+        "nom": "Fouiller illégalement",
+        "cout": {"energie": 3, "reputation": -1},
+        "effet": {"avancement_affaire": 15, "stress": 2},
+        "texte": "Un indice crucial... mais votre badge brille moins fort.",
+        "rarete": 0.3
+    },
+    {
+        "id": "boire",
+        "nom": "Boire un verre",
+        "cout": {"argent": 2, "energie": 1},
+        "effet": {"moral": 1, "reputation": -1},
+        "texte": "L'alcool noie les soucis... et la réputation.",
+        "rarete": 0.5
+    },
+    {
+        "id": "travailler_maison",
+        "nom": "Travailler depuis la maison",
+        "cout": {"energie": 2},
+        "effet": {"avancement_affaire": 5, "relations": 1},
+        "texte": "Vous avancez sur le dossier, mais votre enfant vous regarde avec tristesse.",
+        "rarete": 0.7
+    },
+    {
+        "id": "appeler_ami",
+        "nom": "Appeler un ami",
+        "cout": {"temps": 1, "argent": 1},
+        "effet": {"moral": 2, "relations": 1},
+        "texte": "Une voix amicale dans la tempête.",
+        "rarete": 0.6
+    }
+]
