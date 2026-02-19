@@ -23,12 +23,20 @@
   --danger:       #9b4040;
   --danger-dim:   #5a2525;
   --danger-glow:  rgba(155,64,64,0.15);
-  --stress:       #6b4a7a;
-  --stress-bright:#c090e0;
   --good:         #3d6b50;
   --good-bright:  #70b888;
-  --surreal:      #5a4a7a;
-  --surreal-bright:#b090e0;
+  --surreal:      #4a3a6a;
+  --surreal-bright:#a878d8;
+
+  /* ── Couleurs par stat (toutes distinctes) ── */
+  --c-energie:    #d4914a;   /* orange brûlé     */
+  --c-moral:      #6a9ec0;   /* bleu acier        */
+  --c-relations:  #70b888;   /* vert sauge        */
+  --c-reputation: #c8b07a;   /* or/crème (accent) */
+  --c-stress:     #b05090;   /* rose fuchsia      */
+  --c-argent:     #a0b870;   /* vert kaki         */
+  --c-avancement: #c8b07a;   /* or (même qu'accent) */
+  --c-temps:      #8090b8;   /* bleu ardoise      */
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:var(--bg);}
@@ -155,10 +163,16 @@ body::before{
 .stat:hover::after{opacity:1;}
 .stat-label{font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);}
 .stat-val{font-size:0.85rem;font-weight:500;color:var(--text-primary);}
-.stat-val.danger{color:var(--danger);}
-.stat-val.warn{color:var(--stress-bright);}
-.stat-val.good{color:var(--good-bright);}
-.stat-val.surreal{color:var(--surreal-bright);}
+.stat-val.danger{color:#cc4444;}
+.stat-val.warn{color:#c8a040;}
+.stat-val.good{color:var(--c-relations);}
+/* Per-stat accent colors in topbar */
+.stat[data-stat="energie"] .stat-val { color: var(--c-energie); }
+.stat[data-stat="moral"]   .stat-val { color: var(--c-moral); }
+.stat[data-stat="relations"] .stat-val { color: var(--c-relations); }
+.stat[data-stat="reputation"] .stat-val { color: var(--c-reputation); }
+.stat[data-stat="stress"]  .stat-val { color: var(--c-stress); }
+.stat[data-stat="argent"]  .stat-val { color: var(--c-argent); }
 .day-badge{
   font-size:0.6rem;letter-spacing:0.2em;
   color:var(--text-muted);border:1px solid var(--border);
@@ -344,20 +358,55 @@ body::before{
   line-height:1.6;margin-bottom:10px;
   font-style:italic;
 }
-.card-costs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
-.cost-tag{
-  font-size:0.55rem;letter-spacing:0.1em;
-  padding:2px 6px;border:1px solid var(--danger-dim);
-  color:var(--danger);
+/* ── CARD COSTS & EFFECTS — redesigned ── */
+.card-costs{
+  display:flex;gap:5px;flex-wrap:wrap;
+  margin-bottom:8px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--border);
 }
-.card-effects{display:flex;gap:6px;flex-wrap:wrap;}
-.eff-tag{
-  font-size:0.55rem;letter-spacing:0.1em;
-  padding:2px 6px;border:1px solid;
+.card-effects{
+  display:flex;gap:5px;flex-wrap:wrap;
 }
-.eff-tag.pos{border-color:var(--good);color:var(--good-bright);}
-.eff-tag.neg{border-color:var(--danger-dim);color:var(--danger);}
-.eff-tag.neutral{border-color:var(--border-mid);color:var(--text-muted);}
+
+/* Base chip */
+.chip{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:0.58rem;letter-spacing:0.06em;font-weight:500;
+  padding:3px 7px;
+  border-radius:2px;
+  white-space:nowrap;
+}
+
+/* Temps chip — toujours en bleu ardoise, jamais rouge */
+.chip-temps{
+  background:rgba(128,144,184,0.15);
+  border:1px solid rgba(128,144,184,0.4);
+  color:var(--c-temps);
+}
+
+/* Per-stat chips */
+.chip-energie{ background:rgba(212,145,74,0.12); border:1px solid rgba(212,145,74,0.35); color:var(--c-energie); }
+.chip-moral{   background:rgba(106,158,192,0.12); border:1px solid rgba(106,158,192,0.35); color:var(--c-moral); }
+.chip-relations{ background:rgba(112,184,136,0.12); border:1px solid rgba(112,184,136,0.35); color:var(--c-relations); }
+.chip-reputation{ background:rgba(200,176,122,0.12); border:1px solid rgba(200,176,122,0.35); color:var(--c-reputation); }
+.chip-stress{  background:rgba(176,80,144,0.12); border:1px solid rgba(176,80,144,0.35); color:var(--c-stress); }
+.chip-argent{  background:rgba(160,184,112,0.12); border:1px solid rgba(160,184,112,0.35); color:var(--c-argent); }
+.chip-avancement{ background:rgba(200,176,122,0.12); border:1px solid rgba(200,176,122,0.35); color:var(--c-avancement); }
+
+/* Sign modifier: loss dims the chip, gain brightens it */
+.chip.loss{ opacity:0.75; }
+.chip.gain{ opacity:1; }
+
+/* Sign prefix */
+.chip-sign{ font-size:0.7rem; line-height:1; margin-right:1px; }
+
+/* Legacy — keep for event pills */
+.card-costs .cost-tag,
+.card-effects .eff-tag{ display:none; } /* hidden, replaced by chips */
+.effect-pill.neg{border-color:var(--danger-dim);color:var(--danger);}
+.effect-pill.pos{border-color:var(--good);color:var(--c-relations);}
+.effect-pill.neutral{border-color:var(--border-mid);color:var(--text-muted);}
 .card-rarete{
   position:absolute;top:8px;right:8px;
   font-size:0.5rem;color:var(--accent-dim);
@@ -443,18 +492,17 @@ body::before{
   height:100%;
   transition:width 400ms ease, background-color 400ms;
 }
-.gauge-fill.energie{background:#c8b07a;}
-.gauge-fill.moral{background:#7a9ab5;}
-.gauge-fill.relations{background:var(--good-bright);}
-.gauge-fill.reputation{background:#a08060;}
-.gauge-fill.stress{background:var(--stress-bright);}
-.gauge-fill.avancement{background:var(--accent);}
+.gauge-fill.energie{background:var(--c-energie);}
+.gauge-fill.moral{background:var(--c-moral);}
+.gauge-fill.relations{background:var(--c-relations);}
+.gauge-fill.reputation{background:var(--c-reputation);}
+.gauge-fill.stress{background:var(--c-stress);}
+.gauge-fill.avancement{background:var(--c-avancement);}
+/* Critical states */
 .gauge-fill.low{background:var(--danger)!important;}
-.gauge-fill.mid{background:#b87a30!important;}
-
-/* Stress gauge mid/high states use its own color family */
-.gauge-fill.stress.mid{background:#a060c0!important;}
-.gauge-fill.stress.low{background:#cc44cc!important;}
+.gauge-fill.mid{background:#b06030!important;}
+.gauge-fill.stress.mid{background:#943070!important;}
+.gauge-fill.stress.low{background:#cc2288!important;}
 
 /* Gauge tooltips */
 .gauge-tip{
@@ -652,27 +700,27 @@ body::before{
       <span>Enquête en cours</span>
     </div>
     <div class="stats-row">
-      <div class="stat" data-tip="Votre carburant physique. Trop faible, vous ne pouvez plus agir. Tombe à 0 — c'est la fin.">
+      <div class="stat" data-stat="energie" data-tip="Votre carburant physique. Trop faible, vous ne pouvez plus agir. Tombe à 0 — c'est la fin.">
         <div class="stat-label">Énergie</div>
         <div class="stat-val" id="ui-energie">10</div>
       </div>
-      <div class="stat" data-tip="Votre résistance psychologique. S'effrite sous les coups durs, les sacrifices, les mauvais choix. Tombe à 0 — burn-out.">
+      <div class="stat" data-stat="moral" data-tip="Votre résistance psychologique. S'effrite sous les coups durs, les sacrifices, les mauvais choix. Tombe à 0 — burn-out.">
         <div class="stat-label">Moral</div>
         <div class="stat-val" id="ui-moral">5</div>
       </div>
-      <div class="stat" data-tip="Vos liens avec votre famille et vos proches. Chaque heure volée à l'enquête les fragilise. Tombe à 0 — ils sont partis.">
+      <div class="stat" data-stat="relations" data-tip="Vos liens avec votre famille et vos proches. Chaque heure volée à l'enquête les fragilise. Tombe à 0 — ils sont partis.">
         <div class="stat-label">Relations</div>
         <div class="stat-val" id="ui-relations">7</div>
       </div>
-      <div class="stat" data-tip="Votre crédibilité professionnelle. Chaque raccourci, chaque compromis la grignote. Elle influence vos chances de succès.">
+      <div class="stat" data-stat="reputation" data-tip="Votre crédibilité professionnelle. Chaque raccourci, chaque compromis la grignote. Elle influence vos chances de succès.">
         <div class="stat-label">Réputation</div>
         <div class="stat-val" id="ui-reputation">8</div>
       </div>
-      <div class="stat" data-tip="La pression accumulée. Monte chaque jour, s'emballe avec les coups durs. Atteint 10 — vous craquez.">
+      <div class="stat" data-stat="stress" data-tip="La pression accumulée. Monte chaque jour, s'emballe avec les coups durs. Atteint 10 — vous craquez.">
         <div class="stat-label">Stress</div>
         <div class="stat-val" id="ui-stress">2</div>
       </div>
-      <div class="stat" data-tip="Vos liquidités. Le loyer tombe chaque soir. Certaines actions coûtent cher. À sec trop longtemps — c'est la fin.">
+      <div class="stat" data-stat="argent" data-tip="Vos liquidités. Le loyer tombe chaque soir. Certaines actions coûtent cher. À sec trop longtemps — c'est la fin.">
         <div class="stat-label">Argent</div>
         <div class="stat-val" id="ui-argent">100€</div>
       </div>
@@ -1896,32 +1944,63 @@ function choisirOption(idx, effet, btn) {
 }
 
 function afficherCartes() {
+  // Helpers pour générer les chips par stat
+  const STAT_META = {
+    energie:    { label:'Énergie',    icon:'⚡', cls:'chip-energie' },
+    moral:      { label:'Moral',      icon:'◎',  cls:'chip-moral' },
+    relations:  { label:'Relations',  icon:'♡',  cls:'chip-relations' },
+    reputation: { label:'Réputation', icon:'★',  cls:'chip-reputation' },
+    stress:     { label:'Stress',     icon:'⚠',  cls:'chip-stress' },
+    argent:     { label:'Argent',     icon:'€',  cls:'chip-argent' },
+    avancement: { label:'Enquête',    icon:'◈',  cls:'chip-avancement' },
+  };
+
+  function makeChip(stat, val, isCost) {
+    const meta = STAT_META[stat];
+    if (!meta) return '';
+    // Pour le stress : positif = mauvais, négatif = bon
+    const isGood = stat === 'stress' ? val < 0 : val > 0;
+    const sign = val > 0 ? '+' : '';
+    const signClass = isGood ? 'gain' : 'loss';
+    const arrow = isGood ? '▲' : '▼';
+    return `<span class="chip ${meta.cls} ${signClass}" title="${meta.label} ${sign}${val}">${meta.icon} <span class="chip-sign">${arrow}</span>${Math.abs(val)}</span>`;
+  }
+
   const area = document.getElementById('cards-area');
   area.innerHTML = G.cartesDuJour.map((carte, i) => {
     const isSurreal = carte.surreal;
     const tooExpensive = carte.temps > G.tempsRestant;
-    const coutHtml = Object.entries(carte.cout).filter(([,v])=>v!==0).map(([k,v]) => {
-      const nom = {energie:'Én.',moral:'Moral',stress:'Stress',argent:'€',reputation:'Rép.',avancement:'Enq.'}[k]||k;
-      return `<span class="cost-tag">${nom} ${v>0?'+':''}${v}</span>`;
-    }).join('');
-    const effHtml = Object.entries(carte.effet).map(([k,v]) => {
-      const nom = {energie:'Énergie',moral:'Moral',relations:'Relations',reputation:'Réputation',stress:'Stress',avancement:'Enquête',argent:'Argent'}[k]||k;
-      const pos = v > 0 ? (k==='stress'?false:true) : (k==='stress'?true:false);
-      const sign = v > 0 ? '+' : '';
-      return `<span class="eff-tag ${pos?'pos':'neg'}">${nom} ${sign}${v}</span>`;
-    }).join('');
+
+    // Chip temps
+    const tempsChip = `<span class="chip chip-temps" title="Durée : ${carte.temps}h">⏱ ${carte.temps}h</span>`;
+
+    // Chips coûts (ce qu'on perd en jouant la carte)
+    const coutsChips = Object.entries(carte.cout)
+      .filter(([,v]) => v !== 0)
+      .map(([k, v]) => {
+        // cout positif = on perd cette ressource
+        const delta = typeof v === 'number' && v > 0 ? -v : v;
+        return makeChip(k, delta, true);
+      }).join('');
+
+    // Chips effets
+    const effChips = Object.entries(carte.effet)
+      .filter(([,v]) => v !== 0)
+      .map(([k, v]) => makeChip(k, v, false))
+      .join('');
+
     const rarLabel = carte.rarete === 'rare' ? '◆' : carte.rarete === 'peu_commun' ? '◇' : '';
     const rarCls = carte.rarete === 'rare' ? 'rare' : '';
-    const tempsLabel = `<span class="cost-tag" style="border-color:var(--accent-dim);color:var(--accent-dim);">⏱ ${carte.temps}h</span>`;
-    const surealBadge = carte.surreal ? `<div class="surreal-badge" data-tip="Événement surréaliste : cette carte échappe à la logique ordinaire. Ses effets peuvent sembler irrationnels — faites confiance à votre instinct, pas à la raison.">◈ Anomalie</div>` : '';
+    const surealBadge = carte.surreal ? `<div class="surreal-badge" data-tip="Cette carte échappe à la logique ordinaire. Ses effets peuvent sembler irrationnels — faites confiance à votre instinct, pas à la raison.">◈ Anomalie</div>` : '';
     const opacStyle = tooExpensive ? 'opacity:0.3;pointer-events:none;' : '';
     const titleAttr = tooExpensive ? `title="Pas assez de temps (${carte.temps}h nécessaires)"` : '';
+
     return `<div class="action-card ${isSurreal?'surreal':''}" style="animation-delay:${i*60}ms;${opacStyle}" ${titleAttr} onclick="jouerCarte('${carte.id}',this)" id="acard-${carte.id}">
       ${rarLabel ? `<div class="card-rarete ${rarCls}">${rarLabel}</div>` : ''}
       <div class="card-name">${carte.nom}</div>
       <div class="card-text">${carte.texte}</div>
-      <div class="card-costs">${tempsLabel}${coutHtml}</div>
-      <div class="card-effects">${effHtml}</div>
+      <div class="card-costs">${tempsChip}${coutsChips}</div>
+      <div class="card-effects">${effChips}</div>
       ${surealBadge}
     </div>`;
   }).join('');
